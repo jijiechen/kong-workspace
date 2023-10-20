@@ -2,10 +2,10 @@
 
 users:
   - default
-  - name: vmadmin
+  - name: VM_USERNAME
     sudo:  ALL=(ALL) NOPASSWD:ALL
     ssh_authorized_keys:
-      - AAAAB3NzaC1yc2EAAAADAQABAAABgQCwj0pBhXB2ZykwUwN1xt4kWkl39Aggo1Vr/uypVVHTHc3LSVrP0zGDkEmFYNKcjsU4HFvMETnrvCYu5zLfW+viJeRN0xLK/ObNu8EdC6UmVti9+3Bc4DB0uKBuz3HADdtM1AMuGVIPeX1q4aLGgEOu7dMlpSZrACGMmaFEy5cOmO9PkyvxY+DL90VK85XJna7CeV40KVN1h+ihQdNnOX9F8t9NDbbl/MhrJ4LVN7Ar5+VVa413ICveMsOkgZh8LXfztPKwjoYNFPqAF/Rxp6EAkV0EHKh4Fhw3rpg9IW6LZQys2ZH+QJRQFG3k3vzQBTTgNr54GENVz7mzc90l8VYatyN927xw/2sRJiIItSlshVlt0ciRRbOm2kJXV4e+P6G5AEQzp17nH6Cfxy90SyIZQ8gZPXZA8kmDNP4R8gdZcX9GV8YIQm9vyF1Yk+YI09WFmshnJZQjbDoDpe9dizSfb8om4HoF8OEEazoIqyrPAhkGzw5byFLviTG/V1VDLRE=
+      - SSH_PUBLIC_KEY
 
 package_update: true
 package_upgrade: true
@@ -53,15 +53,15 @@ runcmd:
 
 - |
   # oh-my-zsh
-  sudo -u jaychen sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-  sudo -u jaychen git clone https://github.com/zsh-users/zsh-autosuggestions.git ~jaychen/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-  sudo -u jaychen git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~jaychen/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-  sudo -u jaychen sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~jaychen/.zshrc
-  sudo -u jaychen echo 'export PATH=$PATH:$HOME/.local/bin' >> ~jaychen/.zshrc
+  sudo -u VM_USERNAME sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  sudo -u VM_USERNAME git clone https://github.com/zsh-users/zsh-autosuggestions.git ~VM_USERNAME/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+  sudo -u VM_USERNAME git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~VM_USERNAME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+  sudo -u VM_USERNAME sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~VM_USERNAME/.zshrc
+  sudo -u VM_USERNAME echo 'export PATH=$PATH:$HOME/.local/bin' >> ~VM_USERNAME/.zshrc
 
 - |
   # change default shell
-  sudo chsh -s /bin/zsh jaychen
+  sudo chsh -s /bin/zsh VM_USERNAME
 
 - |
   # dev tools
@@ -69,22 +69,15 @@ runcmd:
   curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
   
   addgroup --system docker
-  adduser jaychen docker
+  adduser VM_USERNAME docker
   newgrp docker
   snap disable docker
   snap enable docker
 
 - |
-  # dev workspace
-  sudo -u jaychen mkdir -p ~jaychen/go/src/github.com/jijiechen
-  sudo -u jaychen git clone git@github.com:jijiechen/kuma.git ~jaychen/go/src/github.com/jijiechen/kuma
-  sudo -u jaychen git clone git@github.com:jijiechen/kuma-gui.git ~jaychen/go/src/github.com/jijiechen/kuma-gui
-  
-  sudo -u jaychen mkdir -p ~jaychen/go/src/github.com/Kong
-  sudo -u jaychen git clone git@github.com:Kong/kong-mesh.git ~jaychen/go/src/github.com/Kong/kong-mesh
-  sudo -u jaychen git clone git@github.com:Kong/kong-mesh-gui.git ~jaychen/go/src/github.com/Kong/kong-mesh-gui
-
-
+  # dev workspace (git clone requires ssh keys to be setup)
+  sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
+  sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/Kong
 
 final_message: "The system is up and ready, initialization took $UPTIME seconds"
 
