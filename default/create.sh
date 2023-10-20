@@ -4,7 +4,6 @@
 set -e 
 
 
-
 WORKING_DIR=$(mktemp)
 SSH_PUBLIC_KEY=$(cat ~/.ssh/id_rsa.pub)
 
@@ -18,7 +17,7 @@ cp $WORKING_DIR/cloud-init.yaml $WORKING_DIR/cloud-init.yaml.pre ; sed "s;VM_USE
 
 # brew install multipass
 multipass launch focal --name default \
-    --cpus 4 --disk 80G --memory 8G \
-    --mount /Users/jaychen:/opt/host \
+    --cpus 8 --disk 80G --memory 16G \
+    --mount /Users/$USER:/opt/host \
     --timeout 600 --cloud-init $WORKING_DIR/cloud-init.yaml
 

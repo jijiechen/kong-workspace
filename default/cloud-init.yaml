@@ -18,6 +18,7 @@ packages:
 - zsh
 - fzf
 - sshfs
+- clang-format
 
 snap:
   commands:
@@ -49,6 +50,9 @@ runcmd:
   echo "net.ipv6.conf.all.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.default.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.lo.disable_ipv6=1" | tee -a /etc/sysctl.conf
+  
+  # Increment inotify limit
+  echo "fs.inotify.max_user_watches = 524288" | tee -a /etc/sysctl.conf
   sysctl -p
 
 - |
@@ -59,9 +63,9 @@ runcmd:
   sudo -u VM_USERNAME sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~VM_USERNAME/.zshrc
   sudo -u VM_USERNAME echo 'export PATH=$PATH:$HOME/.local/bin' >> ~VM_USERNAME/.zshrc
 
-- |
   # change default shell
   sudo chsh -s /bin/zsh VM_USERNAME
+
 
 - |
   # dev tools
@@ -76,8 +80,13 @@ runcmd:
 
 - |
   # dev workspace (git clone requires ssh keys to be setup)
-  sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/Kong
+  sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
+  sudo -u VM_USERNAME git clone https://github.com/kumahq/kuma.git ~VM_USERNAME/go/src/github.com/kumahq/kuma
+  sudo -u VM_USERNAME (cd ~VM_USERNAME/go/src/github.com/kumahq/kuma ; make dev/tools)
+ 
+  # an incorrect /etc/environment file can cause misbehaved OS, and then `multipass ls` can also be misbehave
+  echo 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/VM_USERNAME/.kuma-dev/kuma-master/bin"' > /etc/environment
 
 final_message: "The system is up and ready, initialization took $UPTIME seconds"
 
