@@ -1,5 +1,12 @@
 #cloud-config
 
+users:
+  - default
+  - name: vmadmin
+    sudo:  ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - AAAAB3NzaC1yc2EAAAADAQABAAABgQCwj0pBhXB2ZykwUwN1xt4kWkl39Aggo1Vr/uypVVHTHc3LSVrP0zGDkEmFYNKcjsU4HFvMETnrvCYu5zLfW+viJeRN0xLK/ObNu8EdC6UmVti9+3Bc4DB0uKBuz3HADdtM1AMuGVIPeX1q4aLGgEOu7dMlpSZrACGMmaFEy5cOmO9PkyvxY+DL90VK85XJna7CeV40KVN1h+ihQdNnOX9F8t9NDbbl/MhrJ4LVN7Ar5+VVa413ICveMsOkgZh8LXfztPKwjoYNFPqAF/Rxp6EAkV0EHKh4Fhw3rpg9IW6LZQys2ZH+QJRQFG3k3vzQBTTgNr54GENVz7mzc90l8VYatyN927xw/2sRJiIItSlshVlt0ciRRbOm2kJXV4e+P6G5AEQzp17nH6Cfxy90SyIZQ8gZPXZA8kmDNP4R8gdZcX9GV8YIQm9vyF1Yk+YI09WFmshnJZQjbDoDpe9dizSfb8om4HoF8OEEazoIqyrPAhkGzw5byFLviTG/V1VDLRE=
+
 package_update: true
 package_upgrade: true
 
@@ -46,15 +53,15 @@ runcmd:
 
 - |
   # oh-my-zsh
-  sudo -u ubuntu sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-  sudo -u ubuntu git clone https://github.com/zsh-users/zsh-autosuggestions.git ~ubuntu/.oh-my-zsh/custom/plugins/zsh-autosuggestions
-  sudo -u ubuntu git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~ubuntu/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
-  sudo -u ubuntu sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~ubuntu/.zshrc
-  sudo -u ubuntu echo 'export PATH=$PATH:$HOME/.local/bin' >> ~ubuntu/.zshrc
+  sudo -u jaychen sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  sudo -u jaychen git clone https://github.com/zsh-users/zsh-autosuggestions.git ~jaychen/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+  sudo -u jaychen git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~jaychen/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+  sudo -u jaychen sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~jaychen/.zshrc
+  sudo -u jaychen echo 'export PATH=$PATH:$HOME/.local/bin' >> ~jaychen/.zshrc
 
 - |
   # change default shell
-  sudo chsh -s /bin/zsh ubuntu
+  sudo chsh -s /bin/zsh jaychen
 
 - |
   # dev tools
@@ -62,24 +69,24 @@ runcmd:
   curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
   
   addgroup --system docker
-  adduser ubuntu docker
+  adduser jaychen docker
   newgrp docker
   snap disable docker
   snap enable docker
 
 - |
   # dev workspace
-  sudo -u ubuntu mkdir -p ~ubuntu/go/src/github.com/jijiechen
-  sudo -u ubuntu git clone git@github.com:jijiechen/kuma.git ~ubuntu/go/src/github.com/jijiechen/kuma
-  sudo -u ubuntu git clone git@github.com:jijiechen/kuma-gui.git ~ubuntu/go/src/github.com/jijiechen/kuma-gui
+  sudo -u jaychen mkdir -p ~jaychen/go/src/github.com/jijiechen
+  sudo -u jaychen git clone git@github.com:jijiechen/kuma.git ~jaychen/go/src/github.com/jijiechen/kuma
+  sudo -u jaychen git clone git@github.com:jijiechen/kuma-gui.git ~jaychen/go/src/github.com/jijiechen/kuma-gui
   
-  sudo -u ubuntu mkdir -p ~ubuntu/go/src/github.com/Kong
-  sudo -u ubuntu git clone git@github.com:Kong/kong-mesh.git ~ubuntu/go/src/github.com/Kong/kong-mesh
-  sudo -u ubuntu git clone git@github.com:Kong/kong-mesh-gui.git ~ubuntu/go/src/github.com/Kong/kong-mesh-gui
+  sudo -u jaychen mkdir -p ~jaychen/go/src/github.com/Kong
+  sudo -u jaychen git clone git@github.com:Kong/kong-mesh.git ~jaychen/go/src/github.com/Kong/kong-mesh
+  sudo -u jaychen git clone git@github.com:Kong/kong-mesh-gui.git ~jaychen/go/src/github.com/Kong/kong-mesh-gui
 
 
 
-final_message: "The system is finally up, after $UPTIME seconds"
+final_message: "The system is up and ready, initialization took $UPTIME seconds"
 
 
 # Example: https://github.com/Abuelodelanada/charm-dev-utils/blob/main/cloud-init/charm-dev-juju-latest-edge.yaml
