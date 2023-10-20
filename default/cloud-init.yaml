@@ -1,0 +1,85 @@
+#cloud-config
+
+package_update: true
+package_upgrade: true
+
+packages:
+- python3-pip
+- ruby-full
+- jq
+- sysstat
+- zsh
+- fzf
+- sshfs
+
+snap:
+  commands:
+  - snap install yq
+  - snap install multipass-sshfs
+  - snap install go --channel=1.21/stable --classic
+  - snap install docker --channel=core18/stable
+  - snap refresh
+
+runcmd:
+- DEBIAN_FRONTEND=noninteractive apt-get remove -y landscape-client landscape-common adwaita-icon-theme humanity-icon-theme
+- DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+- DEBIAN_FRONTEND=noninteractive apt-get -y autoremove
+
+- |
+  # disable unnecessary services
+  systemctl disable man-db.timer man-db.service --now
+  systemctl disable apport.service apport-autoreport.service  --now
+  systemctl disable apt-daily.service apt-daily.timer --now
+  systemctl disable apt-daily-upgrade.service apt-daily-upgrade.timer --now
+  systemctl disable unattended-upgrades.service --now
+  systemctl disable motd-news.service motd-news.timer --now
+  systemctl disable bluetooth.target --now
+  systemctl disable ua-messaging.service ua-messaging.timer --now
+  systemctl disable ua-timer.timer ua-timer.service --now
+  systemctl disable systemd-tmpfiles-clean.timer --now
+
+  # Disable IPv6
+  echo "net.ipv6.conf.all.disable_ipv6=1" | tee -a /etc/sysctl.conf
+  echo "net.ipv6.conf.default.disable_ipv6=1" | tee -a /etc/sysctl.conf
+  echo "net.ipv6.conf.lo.disable_ipv6=1" | tee -a /etc/sysctl.conf
+  sysctl -p
+
+- |
+  # oh-my-zsh
+  sudo -u ubuntu sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+  sudo -u ubuntu git clone https://github.com/zsh-users/zsh-autosuggestions.git ~ubuntu/.oh-my-zsh/custom/plugins/zsh-autosuggestions
+  sudo -u ubuntu git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~ubuntu/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+  sudo -u ubuntu sed -i 's/plugins=(git)/plugins=(fzf git zsh-autosuggestions zsh-syntax-highlighting virtualenv colored-man-pages kubectl colorize)/g' ~ubuntu/.zshrc
+  sudo -u ubuntu echo 'export PATH=$PATH:$HOME/.local/bin' >> ~ubuntu/.zshrc
+
+- |
+  # change default shell
+  sudo chsh -s /bin/zsh ubuntu
+
+- |
+  # dev tools
+  curl -o /usr/bin/kubectl -L https://dl.k8s.io/release/v1.28.3/bin/linux/amd64/kubectl
+  curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
+  
+  addgroup --system docker
+  adduser ubuntu docker
+  newgrp docker
+  snap disable docker
+  snap enable docker
+
+- |
+  # dev workspace
+  sudo -u ubuntu mkdir -p ~ubuntu/go/src/github.com/jijiechen
+  sudo -u ubuntu git clone git@github.com:jijiechen/kuma.git ~ubuntu/go/src/github.com/jijiechen/kuma
+  sudo -u ubuntu git clone git@github.com:jijiechen/kuma-gui.git ~ubuntu/go/src/github.com/jijiechen/kuma-gui
+  
+  sudo -u ubuntu mkdir -p ~ubuntu/go/src/github.com/Kong
+  sudo -u ubuntu git clone git@github.com:Kong/kong-mesh.git ~ubuntu/go/src/github.com/Kong/kong-mesh
+  sudo -u ubuntu git clone git@github.com:Kong/kong-mesh-gui.git ~ubuntu/go/src/github.com/Kong/kong-mesh-gui
+
+
+
+final_message: "The system is finally up, after $UPTIME seconds"
+
+
+# Example: https://github.com/Abuelodelanada/charm-dev-utils/blob/main/cloud-init/charm-dev-juju-latest-edge.yaml
