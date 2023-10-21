@@ -53,6 +53,10 @@ runcmd:
   
   # Increment inotify limit
   echo "fs.inotify.max_user_watches = 524288" | tee -a /etc/sysctl.conf
+
+  echo "net.ipv4.ip_forward=1" | tee -a /etc/sysctl.conf
+  echo "net.ipv4.conf.all.proxy_arp=1" | tee -a /etc/sysctl.conf
+
   sysctl -p
 
 - |
