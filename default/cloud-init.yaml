@@ -25,7 +25,6 @@ snap:
   - snap install yq
   - snap install multipass-sshfs
   - snap install go --channel=1.21/stable --classic
-  - snap install docker --channel=core18/stable
   - snap refresh
 
 runcmd:
@@ -72,15 +71,13 @@ runcmd:
 
 
 - |
-  # dev tools
-  curl -o /usr/bin/kubectl -L https://dl.k8s.io/release/v1.28.3/bin/linux/amd64/kubectl
-  curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
-  
+  # install docker
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sh install-docker.sh --version 23.0 --channel stable
+
   addgroup --system docker
   adduser VM_USERNAME docker
-  newgrp docker
-  snap disable docker
-  snap enable docker
+  systemctl enable docker
 
 - |
   # dev workspace (git clone requires ssh keys to be setup)
