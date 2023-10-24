@@ -12,13 +12,23 @@ package_upgrade: true
 
 packages:
 - python3-pip
-- ruby-full
 - jq
 - sysstat
 - zsh
 - fzf
 - sshfs
 - clang-format
+- gnupg
+- build-essential
+- libssl-dev
+- libreadline-dev
+- libyaml-dev
+- libsqlite3-dev
+- sqlite3
+- libxml2-dev
+- libxslt1-dev
+- libcurl4-openssl-dev
+- libffi-dev
 
 snap:
   commands:
@@ -45,14 +55,15 @@ runcmd:
   systemctl disable ua-timer.timer ua-timer.service --now
   systemctl disable systemd-tmpfiles-clean.timer --now
 
-  # Disable IPv6
+  # disable IPv6
   echo "net.ipv6.conf.all.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.default.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.lo.disable_ipv6=1" | tee -a /etc/sysctl.conf
   
-  # Increment inotify limit
+  # increment inotify limit (to supress GoLand complaint on watches)
   echo "fs.inotify.max_user_watches = 524288" | tee -a /etc/sysctl.conf
 
+  # enable forwarding to enable networking from host to docker in VM
   echo "net.ipv4.ip_forward=1" | tee -a /etc/sysctl.conf
   echo "net.ipv4.conf.all.proxy_arp=1" | tee -a /etc/sysctl.conf
 
@@ -69,8 +80,6 @@ runcmd:
   # change default shell
   sudo chsh -s /bin/zsh VM_USERNAME
 
-
-- |
   # install docker
   curl -fsSL https://get.docker.com -o get-docker.sh
   sh install-docker.sh --version 23.0 --channel stable
@@ -79,15 +88,42 @@ runcmd:
   adduser VM_USERNAME docker
   systemctl enable docker
 
+  # install nodejs
+  mkdir -p /etc/apt/keyrings
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+  NODE_MAJOR=20
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+  apt-get update
+  apt-get install nodejs -y
+
+  # install ruby 3
+  sudo -u VM_USERNAME echo 'eval "$(~/.rbenv/bin/rbenv init - zsh)"' >> ~VM_USERNAME/.zshrc
+  sudo -u VM_USERNAME echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~VM_USERNAME/.zshrc
+
+  # Install rbenv
+  sudo -u VM_USERNAME git clone https://github.com/rbenv/rbenv.git ~VM_USERNAME/.rbenv
+  echo '# rbenv setup' >> ~VM_USERNAME/.zshrc
+  echo 'export RBENV_ROOT=~VM_USERNAME/.rbenv' >> ~VM_USERNAME/.zshrc
+  echo 'export PATH="$RBENV_ROOT/bin:$PATH"'  >> ~VM_USERNAME/.zshrc
+  echo 'eval "$(~VM_USERNAME/.rbenv/libexec/rbenv init - zsh)"'  >> ~VM_USERNAME/.zshrc
+
+  mkdir ~VM_USERNAME/.rbenv/plugins
+  git clone https://github.com/rbenv/ruby-build.git ~VM_USERNAME/.rbenv/plugins/ruby-build
+  sudo -u VM_USERNAME zsh -c 'source ~VM_USERNAME/.zshrc; export PREFIX="~VM_USERNAME/.rbenv/ruby-3.1.2";  ~VM_USERNAME/.rbenv/plugins/ruby-build/install.sh; rbenv install 3.1.2; rbenv global 3.1.2; rbenv local 3.1.2'
+
 - |
-  # dev workspace (git clone requires ssh keys to be setup)
+  # project related dev workspace (git clone requires ssh keys to be setup)
+
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/Kong
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
   sudo -u VM_USERNAME git clone https://github.com/kumahq/kuma.git ~VM_USERNAME/go/src/github.com/kumahq/kuma
-  sudo -u VM_USERNAME (cd ~VM_USERNAME/go/src/github.com/kumahq/kuma ; make dev/tools)
- 
+  sudo -u VM_USERNAME bash -c 'cd ~VM_USERNAME/go/src/github.com/kumahq/kuma ; make dev/tools'
+
   # an incorrect /etc/environment file can cause misbehaved OS, and then `multipass ls` can also be misbehave
-  echo 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/home/VM_USERNAME/.kuma-dev/kuma-master/bin"' > /etc/environment
+  sudo -u VM_USERNAME echo 'export PATH=$PATH:/home/VM_USERNAME/.kuma-dev/kuma-master/bin' >> ~VM_USERNAME/.zshrc
+
+  npm install netlify-cli -g
+  npm install yarn -g
 
 final_message: "The system is up and ready, initialization took $UPTIME seconds"
 

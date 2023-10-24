@@ -21,3 +21,4 @@ multipass launch focal --name default \
     --mount /Users/$USER:/opt/host \
     --timeout 600 --cloud-init $WORKING_DIR/cloud-init.yaml
 
+ 
