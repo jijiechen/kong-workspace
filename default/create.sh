@@ -4,6 +4,10 @@
 set -e 
 
 
+VM_NAME=${MULTIPASS_VM_NAME:-default}
+
+echo "Creating vm '$VM_NAME'..."
+
 WORKING_DIR=$(mktemp)
 SSH_PUBLIC_KEY=$(cat ~/.ssh/id_rsa.pub)
 
@@ -16,7 +20,7 @@ cp $WORKING_DIR/cloud-init.yaml $WORKING_DIR/cloud-init.yaml.pre ; sed "s;VM_USE
 
 
 # brew install multipass
-multipass launch focal --name default \
+multipass launch focal --name $VM_NAME \
     --cpus 8 --disk 80G --memory 16G \
     --mount /Users/$USER:/opt/host \
     --timeout 600 --cloud-init $WORKING_DIR/cloud-init.yaml
