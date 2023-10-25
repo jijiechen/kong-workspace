@@ -96,15 +96,12 @@ runcmd:
   apt-get update
   apt-get install nodejs -y
 
-  # install ruby 3
-  sudo -u VM_USERNAME echo 'eval "$(~/.rbenv/bin/rbenv init - zsh)"' >> ~VM_USERNAME/.zshrc
-  sudo -u VM_USERNAME echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~VM_USERNAME/.zshrc
-
   # Install rbenv
+  sudo -u VM_USERNAME git config --global core.editor "vim"
   sudo -u VM_USERNAME git clone https://github.com/rbenv/rbenv.git ~VM_USERNAME/.rbenv
   echo '# rbenv setup' >> ~VM_USERNAME/.zshrc
   echo 'export RBENV_ROOT=~VM_USERNAME/.rbenv' >> ~VM_USERNAME/.zshrc
-  echo 'export PATH="$RBENV_ROOT/bin:$PATH"'  >> ~VM_USERNAME/.zshrc
+  echo 'export PATH="$PATH:$RBENV_ROOT/bin:$PATH"'  >> ~VM_USERNAME/.zshrc
   echo 'eval "$(~VM_USERNAME/.rbenv/libexec/rbenv init - zsh)"'  >> ~VM_USERNAME/.zshrc
 
   mkdir ~VM_USERNAME/.rbenv/plugins
@@ -119,8 +116,9 @@ runcmd:
   sudo -u VM_USERNAME git clone https://github.com/kumahq/kuma.git ~VM_USERNAME/go/src/github.com/kumahq/kuma
   sudo -u VM_USERNAME bash -c 'cd ~VM_USERNAME/go/src/github.com/kumahq/kuma ; make dev/tools'
 
-  # an incorrect /etc/environment file can cause misbehaved OS, and then `multipass ls` can also be misbehave
-  sudo -u VM_USERNAME echo 'export PATH=$PATH:/home/VM_USERNAME/.kuma-dev/kuma-master/bin' >> ~VM_USERNAME/.zshrc
+  
+  sudo -u VM_USERNAME bash -c 'cd ~VM_USERNAME/ ; curl -L https://kuma.io/installer.sh | VERSION=2.4.3 sh - ; mv ./kuma-2.4.3/ ./.kumactl/'
+  sudo -u VM_USERNAME echo 'export PATH=$PATH:$HOME/.kumactl/bin:$HOME/.kuma-dev/kuma-master/bin' >> ~VM_USERNAME/.zshrc
 
   npm install netlify-cli -g
   npm install yarn -g
