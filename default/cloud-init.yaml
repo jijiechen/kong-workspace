@@ -7,36 +7,6 @@ users:
     ssh_authorized_keys:
       - SSH_PUBLIC_KEY
 
-package_update: true
-package_upgrade: true
-
-packages:
-- python3-pip
-- jq
-- sysstat
-- zsh
-- fzf
-- sshfs
-- clang-format
-- gnupg
-- build-essential
-- libssl-dev
-- libreadline-dev
-- libyaml-dev
-- libsqlite3-dev
-- sqlite3
-- libxml2-dev
-- libxslt1-dev
-- libcurl4-openssl-dev
-- libffi-dev
-
-snap:
-  commands:
-  - snap install yq
-  - snap install multipass-sshfs
-  - snap install go --channel=1.21/stable --classic
-  - snap refresh
-
 runcmd:
 - DEBIAN_FRONTEND=noninteractive apt-get remove -y landscape-client landscape-common adwaita-icon-theme humanity-icon-theme
 - DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
@@ -51,7 +21,6 @@ runcmd:
   systemctl disable unattended-upgrades.service --now
   systemctl disable motd-news.service motd-news.timer --now
   systemctl disable bluetooth.target --now
-  systemctl disable ua-messaging.service ua-messaging.timer --now
   systemctl disable ua-timer.timer ua-timer.service --now
   systemctl disable systemd-tmpfiles-clean.timer --now
 
@@ -59,6 +28,9 @@ runcmd:
   echo "net.ipv6.conf.all.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.default.disable_ipv6=1" | tee -a /etc/sysctl.conf
   echo "net.ipv6.conf.lo.disable_ipv6=1" | tee -a /etc/sysctl.conf
+  sysctl -w net.ipv6.conf.all.disable_ipv6=1
+  sysctl -w net.ipv6.conf.default.disable_ipv6=1
+  sysctl -w net.ipv6.conf.lo.disable_ipv6=1
   
   # increment inotify limit (to supress GoLand complaint on watches)
   echo "fs.inotify.max_user_watches = 524288" | tee -a /etc/sysctl.conf
@@ -66,8 +38,21 @@ runcmd:
   # enable forwarding to enable networking from host to docker in VM
   echo "net.ipv4.ip_forward=1" | tee -a /etc/sysctl.conf
   echo "net.ipv4.conf.all.proxy_arp=1" | tee -a /etc/sysctl.conf
+  sysctl -w net.ipv4.ip_forward=1
+  sysctl -w net.ipv4.conf.all.proxy_arp=1
 
   sysctl -p
+
+- |
+  snap install multipass-sshfs
+  snap install go --channel=1.21/stable --classic
+  snap refresh
+
+- |
+  # packages
+  apt-get update
+  apt-get install -y jq zsh fzf sshfs clang-format gnupg 
+  apt-get install -y build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev python3-pip
 
 - |
   # oh-my-zsh
@@ -82,7 +67,7 @@ runcmd:
 
   # install docker
   curl -fsSL https://get.docker.com -o get-docker.sh
-  sh install-docker.sh --version 23.0 --channel stable
+  sh get-docker.sh --version 23.0 --channel stable
 
   addgroup --system docker
   adduser VM_USERNAME docker
@@ -106,7 +91,7 @@ runcmd:
 
   mkdir ~VM_USERNAME/.rbenv/plugins
   git clone https://github.com/rbenv/ruby-build.git ~VM_USERNAME/.rbenv/plugins/ruby-build
-  sudo -u VM_USERNAME zsh -c 'source ~VM_USERNAME/.zshrc; export PREFIX="~VM_USERNAME/.rbenv/ruby-3.1.2";  ~VM_USERNAME/.rbenv/plugins/ruby-build/install.sh; rbenv install 3.1.2; rbenv global 3.1.2; rbenv local 3.1.2'
+  sudo -u VM_USERNAME zsh -c 'source ~VM_USERNAME/.zshrc; export PREFIX="~VM_USERNAME/.rbenv/ruby-3.1.2";  cd ~VM_USERNAME/ ; ~VM_USERNAME/.rbenv/plugins/ruby-build/install.sh; rbenv install 3.1.2; rbenv global 3.1.2; rbenv local 3.1.2'
 
 - |
   # project related dev workspace (git clone requires ssh keys to be setup)
@@ -115,7 +100,7 @@ runcmd:
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
   sudo -u VM_USERNAME git clone https://github.com/kumahq/kuma.git ~VM_USERNAME/go/src/github.com/kumahq/kuma
   sudo -u VM_USERNAME bash -c 'cd ~VM_USERNAME/go/src/github.com/kumahq/kuma ; make dev/tools'
-
+  
   
   sudo -u VM_USERNAME bash -c 'cd ~VM_USERNAME/ ; curl -L https://kuma.io/installer.sh | VERSION=2.4.3 sh - ; mv ./kuma-2.4.3/ ./.kumactl/'
   sudo -u VM_USERNAME echo 'export PATH=$PATH:$HOME/.kumactl/bin:$HOME/.kuma-dev/kuma-master/bin' >> ~VM_USERNAME/.zshrc
