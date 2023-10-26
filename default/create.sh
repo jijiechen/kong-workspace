@@ -25,4 +25,5 @@ multipass launch focal --name $VM_NAME \
     --mount /Users/$USER:/opt/host \
     --timeout 600 --cloud-init $WORKING_DIR/cloud-init.yaml
 
- 
+ # multipass transfer ~/.ssh/id_rsa dev:/home/${USER}/.ssh/
+ # multipass transfer ~/.ssh/id_rsa.pub dev:/home/${USER}/.ssh/
