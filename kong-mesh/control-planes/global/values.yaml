@@ -1,0 +1,26 @@
+kuma:
+  controlPlane:
+    # -- Environment that control plane is run in, useful when running universal global control plane on k8s
+    environment: "universal"
+    mode: "global"
+    secrets:
+      postgresDb:
+        Secret: postgres-credential
+        Key: POSTGRES_DB
+        Env: KUMA_STORE_POSTGRES_DB_NAME
+      postgresHost:
+        Secret: postgres-credential
+        Key: POSTGRES_HOST_RW
+        Env: KUMA_STORE_POSTGRES_HOST
+      postgresUser:
+        Secret: postgres-credential
+        Key: POSTGRES_USER
+        Env: KUMA_STORE_POSTGRES_USER
+      postgresPassword:
+        Secret: postgres-credential
+        Key: POSTGRES_PASSWORD
+        Env: KUMA_STORE_POSTGRES_PASSWORD
+
+  postgres:
+    port: "5432"
+  nameOverride: kong-mesh
