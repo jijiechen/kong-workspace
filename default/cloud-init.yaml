@@ -93,6 +93,22 @@ runcmd:
   git clone https://github.com/rbenv/ruby-build.git ~VM_USERNAME/.rbenv/plugins/ruby-build
   sudo -u VM_USERNAME zsh -c 'source ~VM_USERNAME/.zshrc; export PREFIX="~VM_USERNAME/.rbenv/ruby-3.1.2";  cd ~VM_USERNAME/ ; ~VM_USERNAME/.rbenv/plugins/ruby-build/install.sh; rbenv install 3.1.2; rbenv global 3.1.2; rbenv local 3.1.2'
 
+  # Install gcloud cli
+  echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+  apt-get update && apt-get install -y google-cloud-cli=452.0.1
+  apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
+
+  # AWS CLI
+  ARCH=$(uname -m)
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-$ARCH.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  ./aws/install
+
+  # Azure CLI
+  curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
 - |
   # project related dev workspace (git clone requires ssh keys to be setup)
 
