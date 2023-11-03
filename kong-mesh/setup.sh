@@ -12,7 +12,7 @@ USERNAME=$(whoami)
 # context_name
 GLOBAL_CONTEXT='gke_team-mesh_europe-west1-c_${USERNAME}-starter-1'
 # zone1=context_name1,zone2=context_name2
-ZONE_CONTEXTS='eu=gke_team-mesh_europe-west1-c_${USERNAME}-starter-1,asia=gke_team-mesh_asia-east1_${USERNAME}-starter-2'
+ZONE_CONTEXTS='eu=gke_team-mesh_europe-west1-c_${USERNAME}-starter-1,asia=gke_team-mesh_asia-east1-a_${USERNAME}-starter-2'
 
 GLOBAL_NS=kong-mesh-global
 ZONE_NS=kong-mesh-system
