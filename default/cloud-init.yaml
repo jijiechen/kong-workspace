@@ -112,6 +112,8 @@ runcmd:
 - |
   # project related dev workspace (git clone requires ssh keys to be setup)
 
+  sudo -u VM_USERNAME echo 'export GOPRIVATE="github.com/Kong/*"'  >> ~VM_USERNAME/.zshrc
+  sudo -u VM_USERNAME git config --global --add url."git@github.com:".insteadOf "https://github.com/"
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/Kong
   sudo -u VM_USERNAME mkdir -p ~VM_USERNAME/go/src/github.com/kumahq
   sudo -u VM_USERNAME git clone https://github.com/kumahq/kuma.git ~VM_USERNAME/go/src/github.com/kumahq/kuma

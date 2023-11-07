@@ -4,15 +4,15 @@
 set -e
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-USERNAME=$(whoami)
+USERNAME=jay
 # create the clusters...
 # $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-starter-1 --nodes 2 --region europe-west1-c
 # $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-starter-2 --nodes 2 --region asia-east1-a
 
 # context_name
-GLOBAL_CONTEXT='gke_team-mesh_europe-west1-c_${USERNAME}-starter-1'
+GLOBAL_CONTEXT="gke_team-mesh_europe-west1-c_${USERNAME}-starter-1"
 # zone1=context_name1,zone2=context_name2
-ZONE_CONTEXTS='eu=gke_team-mesh_europe-west1-c_${USERNAME}-starter-1,asia=gke_team-mesh_asia-east1-a_${USERNAME}-starter-2'
+ZONE_CONTEXTS="eu=gke_team-mesh_europe-west1-c_${USERNAME}-starter-1,asia=gke_team-mesh_asia-east1-a_${USERNAME}-starter-2"
 
 GLOBAL_NS=kong-mesh-global
 ZONE_NS=kong-mesh-system
