@@ -53,3 +53,17 @@ eksctl create cluster --name ${CLUSTER_NAME} --instance-prefix ${CLUSTER_NAME} \
   else
     echo "Cluster Setup Failed while running eksctl command."
   fi
+
+
+
+
+# eksctl utils write-kubeconfig --cluster=ubuntu-starter-1
+# jay.chen@konghq.com@ubuntu-starter-1.eu-west-3.eksctl.io
+
+
+# eksctl create cluster --name jay-starter --instance-prefix jay-starter \
+#   --region eu-west-3 --node-type c5.2xlarge \
+#   --nodes 2  --nodes-min 2  --nodes-max 2 \
+#   --managed --spot \
+#   --kubeconfig --set-kubeconfig-context
+
