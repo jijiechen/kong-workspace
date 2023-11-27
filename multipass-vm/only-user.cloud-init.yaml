@@ -1,0 +1,10 @@
+users:
+  - default
+  - name: test
+    groups: sudo, users, admin
+    shell: /bin/bash
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    passwd: "$6$DskYzzYIiriZpXiJ$SplVwAXCuUuahwvTUwNXkhC9501eR/ui7QnTmS8yjKl8YJDzkQzpIArosDIw.nGmrGcXhbuqJ2o6DGBnvB8uX1"
+    lock-passwd: false
+    ssh_pwauth: True
+    chpasswd: { expire: False }
