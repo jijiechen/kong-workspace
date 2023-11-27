@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -x
 set -e 
 
 VM_NAME=${MULTIPASS_VM_NAME:-default}
@@ -11,7 +12,7 @@ if [ -z "$HOST_IP" ]; then
     echo "Could not determine vm IP address, try again later."
     exit 1
 fi
-echo "Adding route to nodes in kind..."
+echo "Adding route to vm..."
 
 BRIDGE_IPS=$(multipass ls --format=json | jq -r ".list[] | select(.name == \"$VM_NAME\") | .ipv4 | .[] | select( . | startswith(\"172.\"))")
 
