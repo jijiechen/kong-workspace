@@ -77,7 +77,15 @@ done
 # create clusters if needed 
 ###################################################
 if [ "$CREATE_CLUSTER" == "1" ]; then
-  if [ "$CLOUD_PLATFORM" == "gcp" ]; then
+  if [ "$CLOUD_PLATFORM" == "k3d" ]; then
+    $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-1 --nodes 2
+
+    GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
+    if [ "$MULTIZONE" == "1" ]; then
+      ZONE_CONTEXTS="eu=k3d-${USERNAME}-${USAGE}-1,asia=k3d-${USERNAME}-${USAGE}-2"
+      $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-2 --nodes 2
+    fi
+  elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
     # create the clusters...
     CUR_PROJECT=$(gcloud config get-value project)
     REGIONS="$REGIONS_GCP"
