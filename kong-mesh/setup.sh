@@ -116,6 +116,10 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
     echo "Unsupported cloud platform: $CLOUD_PLATFORM"
     exit 1
   fi
+
+  echo "==============================="
+  echo "Cluster installation complete."
+  echo "==============================="
 fi
 
 ###################################################
@@ -137,7 +141,19 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
 
       echo
       echo "Trying to get sync endpoint from global control plane..."
-      timeout 90s bash -c "until [ -n \"\$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')\" ]; do sleep 2; done"
+
+      TIMES_TRIED=0
+      MAX_ALLOWED_TRIES=30
+      until [ -n "$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')" ]; do
+          echo "Waiting for global control plane endpoint..." && sleep 2
+          TIMES_TRIED=$((TIMES_TRIED+1))
+          if [[ $TIMES_TRIED -ge $MAX_ALLOWED_TRIES ]]; then 
+              echo "Timeout waiting for endpoint IP of the global control plane"
+              exit 1
+          fi
+      done
+
+
       EXTERNAL_IP=$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
       if [ -z "$EXTERNAL_IP" ]; then
         echo "Can not determine a public IP address for the sync endpoint from global control plane."

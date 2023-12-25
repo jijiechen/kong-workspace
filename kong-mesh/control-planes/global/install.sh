@@ -5,10 +5,10 @@ GLOBAL_NS=$1
 echo "Installing new global control plane in namespace $GLOBAL_NS..."
 
 HELM_RELEASE_NAME=postgres-kong-cp
-BASE64_HOST=$(echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64 -w 0)
+BASE64_HOST=$(echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64 -w 0 2>/dev/null || echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64)
 
-DB_PWD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 13 ; echo '')
-BASE64_PWD=$(echo -n "$DB_PWD" | base64 -w 0)
+DB_PWD=$(openssl rand -base64 12)
+BASE64_PWD=$(echo -n "$DB_PWD" | base64 -w 0 2>/dev/null || echo -n "$DB_PWD" | base64)
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 echo "-> Installing PostgreSQL..."
@@ -24,4 +24,4 @@ helm repo add kong-mesh https://kong.github.io/kong-mesh-charts
 helm install kong-mesh -f $SCRIPT_PATH/values.yaml --skip-crds --create-namespace --namespace $GLOBAL_NS --version 2.4.3 kong-mesh/kong-mesh
 
 echo "-> Waiting for global control plane to be ready..."
-kubectl wait --namespace $GLOBAL_NS deployment/kong-mesh-control-plane --for=condition=Available --timeout=60s
+kubectl wait --namespace $GLOBAL_NS deployment/kong-mesh-control-plane --for=condition=Available --timeout=90s
