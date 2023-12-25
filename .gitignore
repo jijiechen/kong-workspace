@@ -1,1 +1,4 @@
 .DS_Store
+day/*
+!day/.gitkeep
+kong-mesh/mesh-components/demo-counter/kuma-counter-demo

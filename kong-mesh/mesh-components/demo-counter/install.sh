@@ -4,8 +4,8 @@ if [ ! -d "./kuma-counter-demo" ]; then
     git clone https://github.com/kumahq/kuma-counter-demo.git
 fi
 
-kubectl apply -f ./kuma-counter-demo/demo.yaml
-kubectl wait --namespace kuma-demo deployment/demo-app --for=condition=Available --timeout=60s
+kubectl apply -f ./kuma-counter-demo/demo.yaml --namespace demo-app
+kubectl wait --namespace demo-app deployment/demo-app --for=condition=Available --timeout=60s
 
 # kubectl apply -f ./kuma-counter-demo/demo-v2.yaml
 # kubectl wait --namespace kuma-demo deployment/demo-app-v2 --for=condition=Available --timeout=60s

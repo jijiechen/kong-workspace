@@ -1,4 +1,4 @@
-# requires: app-namespace
+# requires: demo-app
 # https://bit.ly/echo-service
 
 apiVersion: v1
@@ -7,7 +7,7 @@ metadata:
   labels:
     app: echo
   name: echo
-  namespace: app-namespace
+  namespace: demo-app
 spec:
   ports:
   - port: 8080
@@ -27,7 +27,7 @@ metadata:
   labels:
     app: echo
   name: echo
-  namespace: app-namespace
+  namespace: demo-app
 spec:
   replicas: 1
   selector:

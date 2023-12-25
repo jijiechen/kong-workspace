@@ -73,6 +73,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
+COLOR_RED='\033[1;31m'
+COLOR_GREEN='\033[1;32m'
+COLOR_YELLOW='\033[1;33m'
+COLOR_NONE='\033[0m' # No Color
+
 ###################################################
 # create clusters if needed 
 ###################################################
@@ -113,13 +119,13 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
       $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-2 --nodes 2 --region $REGION_2
     fi
   else
-    echo "Unsupported cloud platform: $CLOUD_PLATFORM"
+    echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
     exit 1
   fi
 
-  echo "==============================="
-  echo "Cluster installation complete."
-  echo "==============================="
+  echo "${COLOR_GREEN}===========================${COLOR_NONE}"
+  echo "${COLOR_GREEN}Cluster installed complete.${COLOR_NONE}"
+  echo "${COLOR_GREEN}===========================${COLOR_NONE}"
 fi
 
 ###################################################
@@ -148,7 +154,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           echo "Waiting for global control plane endpoint..." && sleep 2
           TIMES_TRIED=$((TIMES_TRIED+1))
           if [[ $TIMES_TRIED -ge $MAX_ALLOWED_TRIES ]]; then 
-              echo "Timeout waiting for endpoint IP of the global control plane"
+              echo "${COLOR_RED}Timeout waiting for endpoint IP of the global control plane.${COLOR_NONE}"
               exit 1
           fi
       done
@@ -156,15 +162,15 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
 
       EXTERNAL_IP=$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
       if [ -z "$EXTERNAL_IP" ]; then
-        echo "Can not determine a public IP address for the sync endpoint from global control plane."
+        echo "${COLOR_RED}Can not determine a public IP address for the sync endpoint from global control plane.${COLOR_NONE}"
         exit 1
       fi
 
       SYNC_ENDPOINT=${EXTERNAL_IP}:5685
-      echo "Zone sync endpoint in global Control Plane is:"
+      echo "${COLOR_GREEN}Zone sync endpoint in global Control Plane is:${COLOR_NONE}"
       echo "$SYNC_ENDPOINT"
 
-      echo
+      echo ''
       IFS=',' read -r -a ZONE_CTXS <<< "$ZONE_CONTEXTS"
       for ZONE in "${ZONE_CTXS[@]}"; do
           ZONE_NAME=$(echo -n $ZONE | cut -d '=' -f 1)
@@ -184,6 +190,10 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
       | kubectl apply -f -
       kubectl wait deployment/kong-mesh-control-plane --namespace $ZONE_NS --for=condition=Available --timeout=60s
   fi
+
+  echo "${COLOR_GREEN}=================================${COLOR_NONE}"
+  echo "${COLOR_GREEN}Control planes installed complete.${COLOR_NONE}"
+  echo "${COLOR_GREEN}=================================${COLOR_NONE}"
 fi
 
 
