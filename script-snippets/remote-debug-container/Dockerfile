@@ -3,7 +3,7 @@ FROM jijiechen/centos8-openssh:202312
 
 RUN yum update -y && yum install -y epel-release \
     && yum install -y git mercurial subversion procps vim \
-    && yum install -y wget jq net-tools bind-utils \
+    && yum install -y wget jq net-tools bind-utils iputils nc telnet \
     && yum groupinstall -y 'Development Tools' \
     && yum clean all
 
@@ -120,20 +120,16 @@ RUN set -eux; \
 	\
 	go version
 
-ENV GOPATH /go
+ENV GOPATH /root/go
 ENV PATH $GOPATH/bin:$PATH
-RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 
-
-RUN mkdir -p /root/go/src/github.com/kumahq && \
-  git clone --depth 1 https://github.com/kumahq/kuma.git /root/go/src/github.com/kumahq/kuma && \
-  bash -c 'cd /root/ ; curl -L https://kuma.io/installer.sh | VERSION=2.5.1 sh - ; mkdir -p ./.kumactl/bin && mv ./kuma-2.5.1/bin/kumactl ./.kumactl/bin/ && rm -rf ./kuma-2.5.1/'
-
+RUN bash -c 'cd /root/ ; curl -L https://kuma.io/installer.sh | VERSION=2.5.1 sh - ; mkdir -p ./.kumactl/bin && mv ./kuma-2.5.1/bin/kumactl ./.kumactl/bin/ && rm -rf ./kuma-2.5.1/'
 ENV PATH="${PATH}:/root/.kumactl/bin:$HOME/.kuma-dev/kuma-master/bin"
 
 RUN mkdir /root/.ssh/ && chown -R root:root /root/.ssh && curl -s -L https://github.com/jijiechen.keys -o /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
 VOLUME /root/.ssh/host
 VOLUME /root/.vscode-server
+VOLUME /root/go
 
 RUN sed 's;HostKey /etc/ssh/;HostKey /root/.ssh/host/;g' -i /etc/ssh/sshd_config
 COPY ./start.sh /start.sh
