@@ -46,9 +46,9 @@ NET_PREFIX=172.$((50+CLS_COUNTER))
 K3D_CLUSTER_CREATE_OPTS="-i rancher/k3s:$K3S_VERSION \
     $(k3d_node_opts)
 	--servers $NUM_NODES --subnet ${NET_PREFIX}.0.0/16 \
-	--timeout 120s"
+  --timeout 120s"
 
-k3d cluster create "${CLUSTER_NAME}" --servers $NUM_NODES $K3D_CLUSTER_CREATE_OPTS 
+K3D_FIX_DNS=1 k3d cluster create "${CLUSTER_NAME}" --servers $NUM_NODES $K3D_CLUSTER_CREATE_OPTS 
 sleep 1
 
 k3d kubeconfig merge ${CLUSTER_NAME} --kubeconfig-merge-default

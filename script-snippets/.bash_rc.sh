@@ -50,6 +50,7 @@ alias kuma2='export KUBECONFIG=~/.kube/kind-kuma-2-config'
 
 
 alias clera='clear'
+alias pdos='pods'
 
 
 export PATH=$HOME/go/bin:$HOME/kong-mesh-2.5.1/bin:$HOME/.kuma-dev/kuma-master/bin:$PATH

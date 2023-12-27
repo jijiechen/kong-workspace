@@ -8,7 +8,7 @@ VM_NAME=${MULTIPASS_VM_NAME:-default}
 
 echo "Creating vm '$VM_NAME'..."
 
-WORKING_DIR=$(mktemp)
+WORKING_DIR=$(mktemp -d)
 SSH_PUBLIC_KEY=$(cat ~/.ssh/id_rsa.pub)
 
 rm $WORKING_DIR
