@@ -10,7 +10,7 @@ MOUNT_SSH_KEYS=$3
 
 DEPLOY_JSON_FILE=$(mktemp)
 
-if [[ "$CONTAINER_NAME" == "RESTORE_BACKUP" ]]; then
+if [[ "$@" == *"RESTORE_BACKUP"* ]]; then
     if [[ ! -z "$(kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o Name || true)" ]]; then
         kubectl delete secret local-ssh-keys 2> /dev/null || true
         kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o 'jsonpath={.data}' > $DEPLOY_JSON_FILE
@@ -80,7 +80,7 @@ function patch(){
 }
 
 patch '['
-patch '{"op": "replace", "path": "/spec/template/spec/containers/CONTAINER_IDX/image", "value":"docker.io/library/devimage:golang-centos8-20240102"}'
+patch '{"op": "replace", "path": "/spec/template/spec/containers/CONTAINER_IDX/image", "value":"jijiechen/remote-vscode:golang-centos8-20240102"}'
 if [[ ! -z "$EXISTING_COMMAND" ]]; then
     patch ',{"op": "remove", "path": "/spec/template/spec/containers/CONTAINER_IDX/command"}'
 fi
@@ -116,7 +116,7 @@ ALL_VOLUME_MOUNTS='[
 ]'
 if [[ "$MOUNT_SSH_KEYS" == "--mount-ssh-keys" ]] && [[ -f "$HOME/.ssh/id_rsa" ]]; then
     ALL_VOLUMES=$(echo "$ALL_VOLUMES" | jq -rc '. += [ {"name": "remote-debug-ssh-keys", "secret":{"secretName": "local-ssh-keys", "defaultMode": 256}} ]')
-    ALL_VOLUME_MOUNTS=$(echo "$ALL_VOLUME_MOUNTS" | jq -rc '. += [ {"name": "remote-debug-ssh-keys", "mountPath":"/root/.ssh/id_rsa", subPath: "id_rsa"} ]')
+    ALL_VOLUME_MOUNTS=$(echo "$ALL_VOLUME_MOUNTS" | jq -rc '. += [ {"name": "remote-debug-ssh-keys", "mountPath":"/root/.ssh/id_rsa", subPath: "id_rsa"},{"name": "remote-debug-ssh-keys", "mountPath":"/root/.ssh/authorized_keys", subPath: "id_rsa.pub"},{"name": "remote-debug-ssh-keys", "mountPath":"/root/.ssh/id_rsa.pub", subPath: "id_rsa.pub"} ]')
 fi
 
 if [[ ! -z "$EXISTING_VOLUMES" ]]; then

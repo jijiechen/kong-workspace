@@ -11,5 +11,5 @@
 # docker buildx build --platform linux/arm64 -t jijiechen/centos8-openssh:202312 --builder multiarch --load .
 
 
-docker build -t devimage:golang-centos8-20231226 .
-k3d image import devimage:golang-centos8-20231226  --cluster $CLUSTER_NAME --mode direct
+docker build -t jijiechen/remote-vscode:golang-centos8-20240102 .
+k3d image import jijiechen/remote-vscode:golang-centos8-20240102  --cluster $CLUSTER_NAME --mode direct

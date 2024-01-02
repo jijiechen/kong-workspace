@@ -126,7 +126,6 @@ ENV PATH $GOPATH/bin:$PATH
 RUN bash -c 'cd /root/ ; curl -L https://kuma.io/installer.sh | VERSION=2.5.1 sh - ; mkdir -p ./.kumactl/bin && mv ./kuma-2.5.1/bin/kumactl ./.kumactl/bin/ && rm -rf ./kuma-2.5.1/'
 ENV PATH="${PATH}:/root/.kumactl/bin:$HOME/.kuma-dev/kuma-master/bin"
 
-RUN mkdir /root/.ssh/ && chown -R root:root /root/.ssh && curl -s -L https://github.com/jijiechen.keys -o /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys
 RUN echo "if [ -f /root/.ssh/host/container-envs ]; then source /root/.ssh/host/container-envs ; fi" >> /root/.bashrc
 VOLUME /root/.ssh/host
 VOLUME /root/.vscode-server
