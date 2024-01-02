@@ -1,5 +1,6 @@
 #!/bin/bash
 
+env | grep _ | grep -v which | head -n -1 | awk -F'=' '{print "export " $1"="$2}' > /root/.ssh/host/container-envs
 mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 1777 "$GOPATH"
 
 test -f /root/.ssh/host/ssh_host_ecdsa_key || /usr/bin/ssh-keygen -q -t ecdsa -f /root/.ssh/host/ssh_host_ecdsa_key -C '' -N ''

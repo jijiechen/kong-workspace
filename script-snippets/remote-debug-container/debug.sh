@@ -19,6 +19,7 @@ if [[ "$CONTAINER_NAME" == "RESTORE_BACKUP" ]]; then
                 del(.metadata.generation) 
                 | del(.metadata.resourceVersion)' | kubectl apply -f -
         # todo: cleanup volumes/volumeMounts when restore
+        # todo: securityContext.runAsNonRoot
         kubectl delete configmap remote-debug-backup-$DEPLOYMENT_NAME
         exit 0
     fi
@@ -70,7 +71,7 @@ function patch(){
 }
 
 patch '['
-patch '{"op": "replace", "path": "/spec/template/spec/containers/CONTAINER_IDX/image", "value":"docker.io/library/devimage:golang-centos8-20231226"}'
+patch '{"op": "replace", "path": "/spec/template/spec/containers/CONTAINER_IDX/image", "value":"docker.io/library/devimage:golang-centos8-20240102"}'
 if [[ ! -z "$EXISTING_COMMAND" ]]; then
     patch ',{"op": "remove", "path": "/spec/template/spec/containers/CONTAINER_IDX/command"}'
 fi
