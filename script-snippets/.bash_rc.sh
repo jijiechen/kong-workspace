@@ -26,10 +26,19 @@ function kcd(){
   fi
 }
 function klog(){
-  CONTAINER=$(kubectl get pod -o json | jq -r '.items[] |.status.initContainerStatuses[]?.pod =.metadata.name | .status.containerStatuses[]?.pod =.metadata.name | [.status.containerStatuses, .status.initContainerStatuses] | flatten | .[] |  select(.state.running.startedAt != null or .state.terminated.startedAt != null) | .pod + " " + .name + " " + (.state.terminated.reason? //"Running") ' | column -t | gum filter --placeholder 'select container...')
+  CONTAINER=$(kubectl get pod -o json "$@" | jq -r '.items[] |.status.initContainerStatuses[]?.pod =.metadata.name | .status.containerStatuses[]?.pod =.metadata.name | [.status.containerStatuses, .status.initContainerStatuses] | flatten | .[] |  select(.state.running.startedAt != null or .state.terminated.startedAt != null) | .pod + " " + .name + " " + (.state.terminated.reason? //"Running") ' | column -t | gum filter --placeholder 'select container...')
 
   if [[ ! -z "$CONTAINER" ]]; then
-    kubectl logs $(echo "$CONTAINER" | awk '{print $1}') -c $(echo "$CONTAINER" | awk '{print $2}') --tail 200 -f
+    POD=$(echo "$CONTAINER" | awk '{print $1}')
+    if [[ ! -z "$@" ]]; then
+      NS=$(kubectl get pod  "$@" -o=jsonpath="{.items[?(@.metadata.name=='$POD')].metadata.namespace}")
+    else
+      NS=$(kubectl config view --minify -o jsonpath='{..namespace}')
+      if [[ -z "$NS" ]]; then
+        NS=default
+      fi
+    fi
+    kubectl -n "$NS" logs $POD -c $(echo "$CONTAINER" | awk '{print $2}') --tail 200 -f
   else
     >&2 echo "No pods to extract logs"
   fi
