@@ -12,14 +12,23 @@ DEPLOY_JSON_FILE=$(mktemp)
 
 if [[ "$CONTAINER_NAME" == "RESTORE_BACKUP" ]]; then
     if [[ ! -z "$(kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o Name || true)" ]]; then
-        kubectl delete secret local-ssh-keys || true
-        kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o 'jsonpath={.data.json}' > $DEPLOY_JSON_FILE
-        cat $DEPLOY_JSON_FILE | \
-            jq -rc 'del(.metadata.annotations["kubectl.kubernetes.io/last-applied-configuration"]) | 
-                del(.metadata.generation) 
-                | del(.metadata.resourceVersion)' | kubectl apply -f -
-        # todo: cleanup volumes/volumeMounts when restore
-        # todo: securityContext.runAsNonRoot
+        kubectl delete secret local-ssh-keys 2> /dev/null || true
+        kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o 'jsonpath={.data}' > $DEPLOY_JSON_FILE
+
+        RESTORE_PATCH='[{"op": "replace", "path": "/spec/template/spec/volumes", "value":VOLUMES_JSON},
+            {"op": "replace", "path": "/spec/template/spec/securityContext", "value":SECURITY_CONTEXT_JSON},
+            {"op": "replace", "path": "/spec/template/spec/containers/CONTAINER_IDX", "value":CONTAINER_JSON}]'
+        
+        CONTAINER_IDX=$(jq -rc '.container_idx' $DEPLOY_JSON_FILE)
+
+        RESTORE_PATCH_JSON=$(echo "$RESTORE_PATCH" | \
+            sed "s;CONTAINER_IDX;$CONTAINER_IDX;" | \
+            sed "s;VOLUMES_JSON;$(jq -rc '.deploy_json | fromjson | .spec.template.spec.volumes' $DEPLOY_JSON_FILE);" | \
+            sed "s;SECURITY_CONTEXT_JSON;$(jq -rc '.deploy_json | fromjson | .spec.template.spec.securityContext' $DEPLOY_JSON_FILE);" | \
+            sed "s;CONTAINER_JSON;$(jq -rc ".deploy_json | fromjson | .spec.template.spec.containers[$CONTAINER_IDX]" $DEPLOY_JSON_FILE);" | \
+        jq -c)
+
+        kubectl patch deploy $DEPLOYMENT_NAME --type json --patch "$RESTORE_PATCH_JSON"
         kubectl delete configmap remote-debug-backup-$DEPLOYMENT_NAME
         exit 0
     fi
@@ -142,7 +151,7 @@ if [[ "$MOUNT_SSH_KEYS" == "--mount-ssh-keys" ]] && [[ -f "$HOME/.ssh/id_rsa" ]]
     fi
 fi
 if [[ -z "$(kubectl get configmap remote-debug-backup-$DEPLOYMENT_NAME -o Name || true)" ]]; then
-    kubectl create configmap remote-debug-backup-$DEPLOYMENT_NAME --from-file json=$DEPLOY_JSON_FILE
+    kubectl create configmap remote-debug-backup-$DEPLOYMENT_NAME --from-file deploy_json=$DEPLOY_JSON_FILE --from-literal container_idx=$CONTAINER_IDX
 fi
 
 # cat $PATCH_JSON
