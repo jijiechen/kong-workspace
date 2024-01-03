@@ -3,6 +3,16 @@ alias k='kubectl'
 alias pods='kubectl get pods -w'
 alias pod='kubectl get pods -w'
 
+function gsync(){
+  UPSREAM_BRANCH=$1
+  UPSREAM_BRANCH=${UPSREAM_BRANCH:-master}
+  if [[ "$(git remote)" == *"upstream"* ]]; then
+    git checkout $UPSREAM_BRANCH && git pull upstream $UPSREAM_BRANCH && git push origin $UPSREAM_BRANCH
+  else
+    git checkout $UPSREAM_BRANCH && git pull
+  fi
+}
+
 function kuse(){
   CLS=$1
   if [[ ! -z "$CLS" ]]; then
