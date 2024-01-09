@@ -84,3 +84,9 @@ git config --global alias.chekcout checkout
 git config --global alias.st status
 git config --global alias.br branch
 git config --global alias.cm 'commit -s'
+function br(){
+  BR=$(git --no-pager branch | gum filter --placeholder 'select a branch')
+  if [[ "${BR:0:2}" != '* ' ]]; then
+    git checkout $(echo $BR | tr -d ' ')
+  fi
+}
