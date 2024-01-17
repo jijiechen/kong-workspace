@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# todo:
+# 1. install kuma
+# 2. specify version
+# 3. support dev version
+# 4. change configuration
+
 # set -x
 set -e
 
@@ -8,18 +14,19 @@ USERNAME=$(whoami)
 
 CLOUD_PLATFORM=gcp
 USAGE=starter
-
-REGIONS_GCP=eu=europe-west1-c,asia=asia-east1-a
-REGIONS_AWS=eu=eu-west-3,asia=ap-southeast-1
-REGIONS=
-GLOBAL_CONTEXT=
-ZONE_CONTEXTS=
-
 CREATE_CLUSTER=
 INSTALL_CONTROL_PLANE=
 MULTIZONE=
 INSTALL_OBSERVABILITY=
 INSTALL_DEMO=
+PRODUCT_NAME=kong-mesh
+COMPONENTS=
+
+function print_usage(){
+  echo "./setup.sh --cloud <k3d|gcp|aws> --usage <use>
+  --create-cluster  --control-plane  --multizone
+  [--product <kuma|kong-mesh> --components 'demo,observability']"
+}
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -35,6 +42,16 @@ while [[ $# -gt 0 ]]; do
       ;;
     --username)
       USERNAME="$2"
+      shift
+      shift
+      ;;
+    --product)
+      PRODUCT_NAME="$2"
+      shift
+      shift
+      ;;
+    --components)
+      COMPONENTS="$2"
       shift
       shift
       ;;
@@ -54,13 +71,9 @@ while [[ $# -gt 0 ]]; do
       MULTIZONE=1
       shift
       ;;
-    --observability)
-      INSTALL_OBSERVABILITY=1
-      shift
-      ;;
-    --demo)
-      INSTALL_DEMO=1
-      shift
+    --help)
+      print_usage
+      exit 0
       ;;
     # -*|--*)
     #   echo "Unknown option $1"
@@ -73,6 +86,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+
+if [[ "$COMPONENTS" == *"observability"* ]]; then
+  INSTALL_OBSERVABILITY=1
+fi
+if [[ "$COMPONENTS" == *"demo"* ]]; then
+  INSTALL_DEMO=1
+fi
+
+REGIONS_GCP=eu=europe-west1-c,asia=asia-east1-a
+REGIONS_AWS=eu=eu-west-3,asia=ap-southeast-1
+REGIONS=
+GLOBAL_CONTEXT=
+ZONE_CONTEXTS=
 
 COLOR_RED='\033[1;31m'
 COLOR_GREEN='\033[1;32m'
@@ -128,6 +154,11 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
   echo "${COLOR_GREEN}===========================${COLOR_NONE}"
 fi
 
+
+SETTING_PREFIX='kuma.'
+if [[ "$PRODUCT_NAME" == "kuma" ]]; then
+SETTING_PREFIX=
+fi
 ###################################################
 # install control planes if needed 
 ###################################################
@@ -186,7 +217,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
       kubectl config use-context $GLOBAL_CONTEXT
 
       echo "Installing control plane..."
-      kumactl install control-plane --set "kuma.controlPlane.mode=standalone" \
+      kumactl install control-plane --set "${SETTING_PREFIX}controlPlane.mode=standalone" \
       | kubectl apply -f -
       kubectl wait deployment/kong-mesh-control-plane --namespace $ZONE_NS --for=condition=Available --timeout=60s
   fi
