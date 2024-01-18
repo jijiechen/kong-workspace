@@ -186,7 +186,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
       kubectl config use-context $GLOBAL_CONTEXT
       EXISTING_NAME=$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o  Name || true)
       if [ -z "$EXISTING_NAME" ]; then
-          $SCRIPT_PATH/control-planes/global/install.sh "$PRODUCT_NAME" "$GLOBAL_NS"
+          $SCRIPT_PATH/control-planes/global/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "$GLOBAL_NS"
       else
         echo "Existing global control plane found in namespace $GLOBAL_NS"
       fi
@@ -231,7 +231,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
         echo "Switching to context: $GLOBAL_CONTEXT"
         kubectl config use-context $GLOBAL_CONTEXT
       fi
-      
+
       echo "Installing control plane..."
       $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "standalone" "$ZONE_NS"
   fi
