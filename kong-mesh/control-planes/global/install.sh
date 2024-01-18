@@ -1,10 +1,12 @@
 #!/bin/bash
 
-GLOBAL_NS=$1
+PRODUCT_NAME=$1
+PRODUCT_VERSION=$2
+GLOBAL_NS=$3
 
 echo "Installing new global control plane in namespace $GLOBAL_NS..."
 
-HELM_RELEASE_NAME=postgres-kong-cp
+HELM_RELEASE_NAME=postgres-${PRODUCT_NAME}-cp
 BASE64_HOST=$(echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64 -w 0 2>/dev/null || echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64)
 
 DB_PWD=$(openssl rand -base64 12)
@@ -14,14 +16,37 @@ SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 echo "-> Installing PostgreSQL..."
 helm install $HELM_RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/postgresql \
   --namespace $GLOBAL_NS --create-namespace \
-  --set "auth.username=kong" --set "auth.password=$DB_PWD" --set "auth.database=kongmesh"
+  --set "auth.username=kuma" --set "auth.password=$DB_PWD" --set "auth.database=kuma"
 cat $SCRIPT_PATH/secrets.yaml | sed "s;POSTGRES_HOSTNAME;$BASE64_HOST;g" | sed "s;RANDOM_PASSWORD;$BASE64_PWD;g" | kubectl create -n $GLOBAL_NS -f -
 
 
 sleep 3
-echo "-> Installing global Kong Control Plane..."
-helm repo add kong-mesh https://kong.github.io/kong-mesh-charts
-helm install kong-mesh -f $SCRIPT_PATH/values.yaml --skip-crds --create-namespace --namespace $GLOBAL_NS --version 2.4.3 kong-mesh/kong-mesh
+echo "-> Installing global ${PRODUCT_NAME} Control Plane..."
+
+HELM_REPO_NAME_KUMA=kuma
+HELM_REPO_URL_KUMA=https://kumahq.github.io/charts
+HELM_CHART_KUMA=kuma
+
+HELM_REPO_NAME_KM=kong-mesh
+HELM_REPO_URL_KM=https://kong.github.io/kong-mesh-charts
+HELM_CHART_KM=kong-mesh
+
+HELM_REPO_NAME=$HELM_REPO_NAME_KM
+HELM_REPO_URL=$HELM_REPO_URL_KM
+HELM_CHART=$HELM_CHART_KM
+VALUES_FILE=$SCRIPT_PATH/values.yaml
+if [[ "$PRODUCT_NAME" == "kuma" ]]; then
+  HELM_REPO_NAME=$HELM_REPO_NAME_KUMA
+  HELM_REPO_URL=$HELM_REPO_URL_KUMA
+  HELM_CHART=$HELM_CHART_KUMA
+  TEMP_FILE=$(mktemp)
+  yq ea "$VALUES_FILE" -o json  | jq '. += .kuma | del(.kuma) | del(.nameOverride)' | yq e -P > $TEMP_FILE
+  VALUES_FILE=$TEMP_FILE
+fi
+
+helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
+helm install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS \
+  --version $PRODUCT_VERSION $HELM_REPO_NAME/$HELM_CHART
 
 echo "-> Waiting for global control plane to be ready..."
-kubectl wait --namespace $GLOBAL_NS deployment/kong-mesh-control-plane --for=condition=Available --timeout=90s
+kubectl wait --namespace $GLOBAL_NS deployment/${PRODUCT_NAME}-control-plane --for=condition=Available --timeout=90s

@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # todo:
-# 1. install kuma
-# 2. specify version
 # 3. support dev version
 # 4. change configuration
 
@@ -12,20 +10,20 @@ set -e
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 USERNAME=$(whoami)
 
-CLOUD_PLATFORM=gcp
-USAGE=starter
+CLOUD_PLATFORM=k3d
+USAGE=poc
 CREATE_CLUSTER=
+CLUSTER_NODES=1
 INSTALL_CONTROL_PLANE=
 MULTIZONE=
-INSTALL_OBSERVABILITY=
-INSTALL_DEMO=
 PRODUCT_NAME=kong-mesh
+PRODUCT_VERSION=2.5.1
 COMPONENTS=
 
 function print_usage(){
-  echo "./setup.sh --cloud <k3d|gcp|aws> --usage <use>
-  --create-cluster  --control-plane  --multizone
-  [--product <kuma|kong-mesh> --components 'demo,observability']"
+  echo "./setup.sh --create-cluster  --control-plane [--multizone]
+  [--cloud <k3d|gcp|aws> --usage <use>]
+  [--product <kuma|kong-mesh> --version '2.5.1' --components 'demo,observability']"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -40,6 +38,11 @@ while [[ $# -gt 0 ]]; do
       shift
       shift
       ;;
+    --nodes)
+      CLUSTER_NODES="$2"
+      shift
+      shift
+      ;;
     --username)
       USERNAME="$2"
       shift
@@ -47,6 +50,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     --product)
       PRODUCT_NAME="$2"
+      shift
+      shift
+      ;;
+    --version)
+      PRODUCT_VERSION="$2"
       shift
       shift
       ;;
@@ -87,6 +95,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 
+INSTALL_OBSERVABILITY=
+INSTALL_DEMO=
 if [[ "$COMPONENTS" == *"observability"* ]]; then
   INSTALL_OBSERVABILITY=1
 fi
@@ -110,12 +120,12 @@ COLOR_NONE='\033[0m' # No Color
 ###################################################
 if [ "$CREATE_CLUSTER" == "1" ]; then
   if [ "$CLOUD_PLATFORM" == "k3d" ]; then
-    $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-1 --nodes 2
+    $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES
 
     GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
     if [ "$MULTIZONE" == "1" ]; then
       ZONE_CONTEXTS="eu=k3d-${USERNAME}-${USAGE}-1,asia=k3d-${USERNAME}-${USAGE}-2"
-      $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-2 --nodes 2
+      $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES
     fi
   elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
     # create the clusters...
@@ -125,11 +135,11 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
     REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
 
     GLOBAL_CONTEXT="gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1"
-    $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-1 --nodes 2 --region $REGION_1
+    $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES --region $REGION_1
 
     if [ "$MULTIZONE" == "1" ]; then
       ZONE_CONTEXTS="eu=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-2"
-      $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-2 --nodes 2 --region $REGION_2
+      $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   elif [ "$CLOUD_PLATFORM" == "aws" ]; then
     # create the clusters...
@@ -138,11 +148,11 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
     REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
 
     GLOBAL_CONTEXT="gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1"
-    $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-1 --nodes 2 --region $REGION_1
+    $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES --region $REGION_1
 
     if [ "$MULTIZONE" == "1" ]; then
       ZONE_CONTEXTS="eu=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-2"
-      $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-2 --nodes 2 --region $REGION_2
+      $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   else
     echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
@@ -163,15 +173,20 @@ fi
 # install control planes if needed 
 ###################################################
 if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
-  GLOBAL_NS=kong-mesh-global
-  ZONE_NS=kong-mesh-system
+  GLOBAL_NS=${PRODUCT_NAME}-global
+  ZONE_NS=${PRODUCT_NAME}-system
 
   if [ "$MULTIZONE" == "1" ]; then
+      if [[ "$CREATE_CLUSTER" != "1" ]]; then
+        echo "Multizone installation should be used with '--create-cluster'"
+        exit 1
+      fi
+
       echo "Switching to global zone: $GLOBAL_CONTEXT"
       kubectl config use-context $GLOBAL_CONTEXT
-      EXISTING_NAME=$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o  Name || true)
+      EXISTING_NAME=$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o  Name || true)
       if [ -z "$EXISTING_NAME" ]; then
-          $SCRIPT_PATH/control-planes/global/install.sh "$GLOBAL_NS"
+          $SCRIPT_PATH/control-planes/global/install.sh "$PRODUCT_NAME" "$GLOBAL_NS"
       else
         echo "Existing global control plane found in namespace $GLOBAL_NS"
       fi
@@ -181,7 +196,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
 
       TIMES_TRIED=0
       MAX_ALLOWED_TRIES=30
-      until [ -n "$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')" ]; do
+      until [ -n "$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')" ]; do
           echo "Waiting for global control plane endpoint..." && sleep 2
           TIMES_TRIED=$((TIMES_TRIED+1))
           if [[ $TIMES_TRIED -ge $MAX_ALLOWED_TRIES ]]; then 
@@ -190,8 +205,7 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           fi
       done
 
-
-      EXTERNAL_IP=$(kubectl --namespace $GLOBAL_NS  get service/kong-mesh-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
+      EXTERNAL_IP=$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
       if [ -z "$EXTERNAL_IP" ]; then
         echo "${COLOR_RED}Can not determine a public IP address for the sync endpoint from global control plane.${COLOR_NONE}"
         exit 1
@@ -210,16 +224,16 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           echo "Installing zone control plane for $ZONE_NAME..."
           kubectl config use-context $ZONE_CTX
 
-          $SCRIPT_PATH/control-planes/zone/install.sh "$ZONE_NAME" "$ZONE_NS" "$SYNC_ENDPOINT"
+          $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "$ZONE_NAME" "$ZONE_NS" "$SYNC_ENDPOINT"
       done
   else
-      echo "Switching to context: $GLOBAL_CONTEXT"
-      kubectl config use-context $GLOBAL_CONTEXT
-
+      if [[ "$CREATE_CLUSTER" == "1" ]]; then
+        echo "Switching to context: $GLOBAL_CONTEXT"
+        kubectl config use-context $GLOBAL_CONTEXT
+      fi
+      
       echo "Installing control plane..."
-      kumactl install control-plane --set "${SETTING_PREFIX}controlPlane.mode=standalone" \
-      | kubectl apply -f -
-      kubectl wait deployment/kong-mesh-control-plane --namespace $ZONE_NS --for=condition=Available --timeout=60s
+      $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "standalone" "$ZONE_NS"
   fi
 
   echo "${COLOR_GREEN}=================================${COLOR_NONE}"
@@ -230,5 +244,5 @@ fi
 
 # To configure kumactl:
 # kubectl config use-context $GLOBAL_CONTEXT
-# kubectl -n kong-mesh-global port-forward svc/kong-mesh-control-plane 5681:5681 &
-# kumactl config control-planes add --name kong-mesh --address http://localhost:5681 --skip-verify
+# kubectl -n ${PRODUCT_NAME}-global port-forward svc/${PRODUCT_NAME}-control-plane 5681:5681 &
+# kumactl config control-planes add --name ${PRODUCT_NAME} --address http://localhost:5681 --skip-verify
