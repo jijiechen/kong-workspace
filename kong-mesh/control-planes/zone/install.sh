@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 PRODUCT_NAME=$1
 PRODUCT_VERSION=$2
@@ -28,16 +29,21 @@ if [[ "$PRODUCT_NAME" == "kuma" ]]; then
   HELM_REPO_NAME=$HELM_REPO_NAME_KUMA
   HELM_REPO_URL=$HELM_REPO_URL_KUMA
   HELM_CHART=$HELM_CHART_KUMA
+  TEMP_FILE=$(mktemp)
+  yq ea "$VALUES_FILE" -o json  | jq '. += .kuma | del(.kuma) | del(.nameOverride)' | yq e -P > $TEMP_FILE
+  VALUES_FILE=$TEMP_FILE
 fi
 
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
 
 if [[ "$SYNC_ENDPOINT" == "" ]]; then
   helm install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS \
+    -f "$VALUES_FILE" \
     --set "${SETTING_PREFIX}controlPlane.mode=standalone" \
     --version $PRODUCT_VERSION $HELM_REPO_NAME/$HELM_CHART
 else
   helm install ${PRODUCT_NAME} --create-namespace --namespace $ZONE_NS \
+    -f "$VALUES_FILE" \
     --set "${SETTING_PREFIX}controlPlane.mode=zone" \
     --set "${SETTING_PREFIX}controlPlane.zone=$ZONE_NAME" \
     --set "${SETTING_PREFIX}ingress.enabled=true" \
