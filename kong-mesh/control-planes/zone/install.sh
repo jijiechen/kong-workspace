@@ -13,6 +13,12 @@ if [[ "$PRODUCT_NAME" == "kuma" ]]; then
 SETTING_PREFIX=
 fi
 
+CHART_FILE=
+if [[  "$PRODUCT_VERSION" == *".tgz" ]]; then
+  CHART_FILE=$PRODUCT_VERSION
+  PRODUCT_VERSION=
+fi
+
 HELM_REPO_NAME_KUMA=kuma
 HELM_REPO_URL_KUMA=https://kumahq.github.io/charts
 HELM_CHART_KUMA=kuma
@@ -36,20 +42,24 @@ fi
 
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
 
+if [[ "$CHART_FILE" == "" ]]; then
+  CHART_FILE=$HELM_REPO_NAME/$HELM_CHART
+fi
+
+HELM_COMMAND=(helm install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS -f "$VALUES_FILE")
 if [[ "$SYNC_ENDPOINT" == "" ]]; then
-  helm install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS \
-    -f "$VALUES_FILE" \
-    --set "${SETTING_PREFIX}controlPlane.mode=standalone" \
-    --version $PRODUCT_VERSION $HELM_REPO_NAME/$HELM_CHART
+  HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=standalone")
 else
-  helm install ${PRODUCT_NAME} --create-namespace --namespace $ZONE_NS \
-    -f "$VALUES_FILE" \
-    --set "${SETTING_PREFIX}controlPlane.mode=zone" \
+  HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=zone" \
     --set "${SETTING_PREFIX}controlPlane.zone=$ZONE_NAME" \
     --set "${SETTING_PREFIX}ingress.enabled=true" \
     --set "${SETTING_PREFIX}controlPlane.kdsGlobalAddress=grpcs://$SYNC_ENDPOINT" \
-    --set "${SETTING_PREFIX}controlPlane.tls.kdsZoneClient.skipVerify=true" \
-    --version $PRODUCT_VERSION $HELM_REPO_NAME/$HELM_CHART
+    --set "${SETTING_PREFIX}controlPlane.tls.kdsZoneClient.skipVerify=true")
 fi
+if [[ ! -z "$PRODUCT_VERSION" ]]; then
+  HELM_COMMAND+=(--version $PRODUCT_VERSION)
+fi
+HELM_COMMAND+=($CHART_FILE)
+"${HELM_COMMAND[@]}"
 
 kubectl wait deployment/${PRODUCT_NAME}-control-plane --namespace $ZONE_NS --for=condition=Available --timeout=60s

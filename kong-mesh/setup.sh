@@ -23,7 +23,7 @@ COMPONENTS=
 function print_usage(){
   echo "./setup.sh --create-cluster  --control-plane [--multizone]
   [--cloud <k3d|gcp|aws> --usage <use>]
-  [--product <kuma|kong-mesh> --version '2.5.1' --components 'demo,observability']"
+  [--product <kuma|kong-mesh> --version '2.5.1|local.tgz' --components 'demo,observability']"
 }
 
 while [[ $# -gt 0 ]]; do

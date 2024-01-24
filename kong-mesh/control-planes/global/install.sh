@@ -23,6 +23,12 @@ cat $SCRIPT_PATH/secrets.yaml | sed "s;POSTGRES_HOSTNAME;$BASE64_HOST;g" | sed "
 sleep 3
 echo "-> Installing global ${PRODUCT_NAME} Control Plane..."
 
+CHART_FILE=
+if [[  "$PRODUCT_VERSION" == *".tgz" ]]; then
+  CHART_FILE=$PRODUCT_VERSION
+  PRODUCT_VERSION=
+fi
+
 HELM_REPO_NAME_KUMA=kuma
 HELM_REPO_URL_KUMA=https://kumahq.github.io/charts
 HELM_CHART_KUMA=kuma
@@ -44,9 +50,17 @@ if [[ "$PRODUCT_NAME" == "kuma" ]]; then
   VALUES_FILE=$TEMP_FILE
 fi
 
+if [[ "$CHART_FILE" == "" ]]; then
+  CHART_FILE=$HELM_REPO_NAME/$HELM_CHART
+fi
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
-helm install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS \
-  --version $PRODUCT_VERSION $HELM_REPO_NAME/$HELM_CHART
+HELM_COMMAND=(helm install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS)
+if [[ ! -z "$PRODUCT_VERSION" ]]; then
+  HELM_COMMAND+=(--version $PRODUCT_VERSION)
+fi
+HELM_COMMAND+=($CHART_FILE)
+"${HELM_COMMAND[@]}"
+
 
 echo "-> Waiting for global control plane to be ready..."
 kubectl wait --namespace $GLOBAL_NS deployment/${PRODUCT_NAME}-control-plane --for=condition=Available --timeout=90s
