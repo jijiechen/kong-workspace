@@ -2,3 +2,4 @@
 day/*
 !day/.gitkeep
 kuma-counter-demo
+kong-mesh/*.tgz

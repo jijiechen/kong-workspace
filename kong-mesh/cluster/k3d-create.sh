@@ -66,6 +66,7 @@ K3D_FIX_DNS=1 k3d cluster create "${CLUSTER_NAME}" --servers $NUM_NODES $K3D_CLU
 sleep 1
 
 k3d kubeconfig merge ${CLUSTER_NAME} --kubeconfig-merge-default
+k3d kubeconfig get ${CLUSTER_NAME} > ~/.kube/${CLUSTER_NAME}.config
 kubectl config set-context k3d-${CLUSTER_NAME}
 
 TIMES_TRIED=0
