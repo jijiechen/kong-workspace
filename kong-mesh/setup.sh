@@ -115,6 +115,37 @@ COLOR_GREEN='\033[1;32m'
 COLOR_YELLOW='\033[1;33m'
 COLOR_NONE='\033[0m' # No Color
 
+if [ "$CLOUD_PLATFORM" == "k3d" ]; then
+  GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
+  if [ "$MULTIZONE" == "1" ]; then
+    ZONE_CONTEXTS="eu=k3d-${USERNAME}-${USAGE}-1,asia=k3d-${USERNAME}-${USAGE}-2"
+  fi
+elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
+  # create the clusters...
+  CUR_PROJECT=$(gcloud config get-value project)
+  REGIONS="$REGIONS_GCP"
+  REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
+  REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
+
+  GLOBAL_CONTEXT="gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1"
+  if [ "$MULTIZONE" == "1" ]; then
+    ZONE_CONTEXTS="eu=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-2"
+  fi
+elif [ "$CLOUD_PLATFORM" == "aws" ]; then
+  # create the clusters...
+  REGIONS="$REGIONS_AWS"
+  REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
+  REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
+
+  GLOBAL_CONTEXT="gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1"
+  if [ "$MULTIZONE" == "1" ]; then
+    ZONE_CONTEXTS="eu=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-2"
+  fi
+else
+  echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
+  exit 1
+fi
+
 ###################################################
 # create clusters if needed 
 ###################################################
@@ -122,9 +153,7 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
   if [ "$CLOUD_PLATFORM" == "k3d" ]; then
     $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES
 
-    GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
     if [ "$MULTIZONE" == "1" ]; then
-      ZONE_CONTEXTS="eu=k3d-${USERNAME}-${USAGE}-1,asia=k3d-${USERNAME}-${USAGE}-2"
       $SCRIPT_PATH/cluster/k3d-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES
     fi
   elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
@@ -134,11 +163,9 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
     REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
     REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
 
-    GLOBAL_CONTEXT="gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1"
     $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES --region $REGION_1
 
     if [ "$MULTIZONE" == "1" ]; then
-      ZONE_CONTEXTS="eu=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-2"
       $SCRIPT_PATH/cluster/gcp-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   elif [ "$CLOUD_PLATFORM" == "aws" ]; then
@@ -147,11 +174,9 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
     REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
     REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
 
-    GLOBAL_CONTEXT="gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1"
     $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES --region $REGION_1
 
     if [ "$MULTIZONE" == "1" ]; then
-      ZONE_CONTEXTS="eu=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-2"
       $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   else
@@ -177,11 +202,6 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
   ZONE_NS=${PRODUCT_NAME}-system
 
   if [ "$MULTIZONE" == "1" ]; then
-      if [[ "$CREATE_CLUSTER" != "1" ]]; then
-        echo "Multizone installation should be used with '--create-cluster'"
-        exit 1
-      fi
-
       echo "Switching to global zone: $GLOBAL_CONTEXT"
       kubectl config use-context $GLOBAL_CONTEXT
       EXISTING_NAME=$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o  Name || true)
@@ -227,10 +247,8 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "$ZONE_NAME" "$ZONE_NS" "$SYNC_ENDPOINT"
       done
   else
-      if [[ "$CREATE_CLUSTER" == "1" ]]; then
-        echo "Switching to context: $GLOBAL_CONTEXT"
-        kubectl config use-context $GLOBAL_CONTEXT
-      fi
+      echo "Switching to context: $GLOBAL_CONTEXT"
+      kubectl config use-context $GLOBAL_CONTEXT
 
       echo "Installing control plane..."
       $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "standalone" "$ZONE_NS"
