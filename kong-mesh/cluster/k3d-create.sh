@@ -52,6 +52,8 @@ function k3d_node_opts(){
         echo -n " --k3s-arg --disable=traefik@server:$IDX \
         --k3s-arg --disable=metrics-server@server:$IDX \
         --k3s-arg --disable=servicelb@server:$IDX \
+        --k3s-arg --kubelet-arg=eviction-hard=imagefs.available<1%,nodefs.available<1%@server:$IDX \
+        --k3s-arg --kubelet-arg=eviction-minimum-reclaim=imagefs.available=1%,nodefs.available=1%@server:$IDX \
         --port ${PORT_PREFIX}80-${PORT_PREFIX}99:30080-30099@server:$IDX"
         PORT_PREFIX=$((PORT_PREFIX+2))
     done

@@ -247,11 +247,13 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "$ZONE_NAME" "$ZONE_NS" "$SYNC_ENDPOINT"
       done
   else
+    if [ "$CREATE_CLUSTER" == "1" ]; then
       echo "Switching to context: $GLOBAL_CONTEXT"
       kubectl config use-context $GLOBAL_CONTEXT
+    fi
 
-      echo "Installing control plane..."
-      $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "standalone" "$ZONE_NS"
+    echo "Installing control plane..."
+    $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "standalone" "$ZONE_NS"
   fi
 
   echo "${COLOR_GREEN}=================================${COLOR_NONE}"
