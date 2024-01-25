@@ -201,6 +201,21 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
   GLOBAL_NS=${PRODUCT_NAME}-global
   ZONE_NS=${PRODUCT_NAME}-system
 
+  if [[ "$CLOUD_PLATFORM" == "k3d" ]] && [[ "$PRODUCT_VERSION" == "preview" ]]; then
+    PROJECT_DIR=$HOME/go/src/github.com/Kong/kong-mesh
+    if [[ "$PRODUCT_NAME" == "kuma" ]]; then
+      PROJECT_DIR=$HOME/go/src/github.com/jijiechen/kuma
+    fi
+
+    CLUSTERS="${USERNAME}-${USAGE}-1"
+    if [ "$MULTIZONE" == "1" ]; then
+      CLUSTERS="${USERNAME}-${USAGE}-1,${USERNAME}-${USAGE}-2"
+    fi
+
+    $SCRIPT_PATH/cluster/k3d/prepare-preview-version.sh "$CLUSTERS" "$PROJECT_DIR"
+    PRODUCT_VERSION=$(ls $PROJECT_DIR/.cr-release-packages/*.tgz)
+  fi
+
   if [ "$MULTIZONE" == "1" ]; then
       echo "Switching to global zone: $GLOBAL_CONTEXT"
       kubectl config use-context $GLOBAL_CONTEXT
