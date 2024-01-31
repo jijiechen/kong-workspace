@@ -7,7 +7,8 @@ while true; do
     if [[ "$HTTP_STATUS" -ge 200 ]] && [[ "$HTTP_STATUS" -lt 400 ]]; then
         echo -n "."
     else
-        echo "\n$RANDOM_ID: $HTTP_STATUS\n"
+        echo ""
+        echo "$RANDOM_ID: $HTTP_STATUS"
     fi
 
     RANDOM_MS=$((100 + RANDOM % 100))
