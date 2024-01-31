@@ -41,6 +41,7 @@ if [[ "$PRODUCT_NAME" == "kuma" ]]; then
 fi
 
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
+helm repo update
 
 if [[ "$CHART_FILE" == "" ]]; then
   CHART_FILE=$HELM_REPO_NAME/$HELM_CHART
