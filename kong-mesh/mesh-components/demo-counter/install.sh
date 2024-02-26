@@ -1,10 +1,11 @@
 #!/bin/bash
 
-if [ ! -d "./kuma-counter-demo" ]; then
+SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+if [ ! -d "$SCRIPT_PATH/kuma-counter-demo" ]; then
     git clone https://github.com/kumahq/kuma-counter-demo.git
 fi
 
-kubectl apply -f ./kuma-counter-demo/demo.yaml
+kubectl apply -f $SCRIPT_PATH/kuma-counter-demo/demo.yaml
 kubectl wait --namespace kuma-demo deployment/demo-app --for=condition=Available --timeout=60s
 
 # kubectl apply -f ./kuma-counter-demo/demo-v2.yaml
