@@ -3,7 +3,7 @@ FROM jijiechen/centos8-openssh:202312
 
 RUN yum update -y && yum install -y epel-release \
     && yum install -y git mercurial subversion procps vim \
-    && yum install -y wget jq net-tools bind-utils iputils nc telnet \
+    && yum install -y wget jq net-tools bind-utils iputils nc telnet patchelf \
     && yum groupinstall -y 'Development Tools' \
     && yum clean all
 
@@ -134,3 +134,7 @@ VOLUME /root/go
 RUN sed 's;HostKey /etc/ssh/;HostKey /root/.ssh/host/;g' -i /etc/ssh/sshd_config
 COPY ./start.sh /start.sh
 
+# Download glibc from this page and save into ./glibc folder
+# https://github.com/jijiechen/kong-workspace/releases/tag/glibc
+ADD ./glibc/glibc-2.37-linux-aarch64.tar.gz /opt/
+# patchelf --set-interpreter /opt/usr/glibc-compat/lib/ld-linux-aarch64.so.1 --set-rpath /opt/usr/glibc-compat/lib/ envoy

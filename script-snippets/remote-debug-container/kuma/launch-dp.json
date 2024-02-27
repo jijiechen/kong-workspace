@@ -1,0 +1,33 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach to Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "processId": 0
+        },
+        {
+            "type": "go",
+            "request": "launch",
+            "name": "kuma-dp",
+            "mode": "debug",
+            "program": "${workspaceFolder}/kong-mesh/app/kuma-cp",
+            "args": ["run","--log-level=debug","--log-output-path=", "--config-file=/etc/kuma.io/kuma-control-plane/config.yaml"],
+            "buildFlags": [
+                "-v", "-tags=opa_no_oci", "-ldflags='-X github.com/kumahq/kuma/pkg/version.version=2.5.1 -X github.com/kumahq/kuma/pkg/version.gitTag=2.5.1 -X github.com/kumahq/kuma/pkg/version.gitCommit=2c8fe7fc4d58c3e581127c8f5cd6ce66d2661676 -X github.com/kumahq/kuma/pkg/version.buildDate=local-build -X github.com/kumahq/kuma/pkg/version.Envoy=1.28.0 -X github.com/kumahq/kuma/pkg/version.basedOnKuma=2.5.1 -X \"github.com/kumahq/kuma/pkg/version.Product=Kong Mesh\"'"
+            ],
+            "env": {
+                "GOEXPERIMENT":"boringcrypto",
+                "CGO_ENABLED": "0",
+                "XDG_CONFIG_HOME": "${workspaceFolder}/kong-mesh/app/kuma-dp",
+                "KUMA_DATAPLANE_RUNTIME_BINARY_PATH": "${workspaceFolder}/kong-mesh/app/kuma-cp",
+                "KUMA_DNS_CORE_DNS_BINARY_PATH": "${workspaceFolder}/kong-mesh/app/kuma-cp"
+            }
+          }
+    ]
+}

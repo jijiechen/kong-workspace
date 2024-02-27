@@ -3,3 +3,4 @@ day/*
 !day/.gitkeep
 kuma-counter-demo
 kong-mesh/*.tgz
+script-snippets/remote-debug-container/glibc/
