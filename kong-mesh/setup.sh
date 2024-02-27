@@ -22,7 +22,7 @@ COMPONENTS=
 
 function print_usage(){
   echo "./setup.sh --create-cluster  --control-plane [--multizone]
-  [--cloud <k3d|gcp|aws> --usage <use>]
+  [--cloud <k3d|gcp|aws|azure> --usage <use>]
   [--product <kuma|kong-mesh> --version '2.5.1|local.tgz' --components 'demo,observability']"
 }
 
@@ -106,6 +106,7 @@ fi
 
 REGIONS_GCP=eu=europe-west1-c,asia=asia-east1-a
 REGIONS_AWS=eu=eu-west-3,asia=ap-southeast-1
+REGIONS_AZURE=eu=germany,asia=eastasia
 REGIONS=
 GLOBAL_CONTEXT=
 ZONE_CONTEXTS=
@@ -140,6 +141,16 @@ elif [ "$CLOUD_PLATFORM" == "aws" ]; then
   GLOBAL_CONTEXT="gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1"
   if [ "$MULTIZONE" == "1" ]; then
     ZONE_CONTEXTS="eu=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-2"
+  fi
+elif [ "$CLOUD_PLATFORM" == "azure" ]; then
+  # create the clusters...
+  REGIONS="$REGIONS_AZURE"
+  REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
+  REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
+
+  GLOBAL_CONTEXT="az_${REGION_1}_${USERNAME}-${USAGE}-1"
+  if [ "$MULTIZONE" == "1" ]; then
+    ZONE_CONTEXTS="eu=az_${REGION_1}_${USERNAME}-${USAGE}-1,asia=az_${REGION_1}_${USERNAME}-${USAGE}-2"
   fi
 else
   echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
@@ -178,6 +189,17 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
 
     if [ "$MULTIZONE" == "1" ]; then
       $SCRIPT_PATH/cluster/aws-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
+    fi  
+  elif [ "$CLOUD_PLATFORM" == "azure" ]; then
+    # create the clusters...
+    REGIONS="$REGIONS_AZURE"
+    REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
+    REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
+
+    $SCRIPT_PATH/cluster/az-create.sh --name ${USERNAME}-${USAGE}-1 --nodes $CLUSTER_NODES --region $REGION_1
+
+    if [ "$MULTIZONE" == "1" ]; then
+      $SCRIPT_PATH/cluster/az-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   else
     echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
