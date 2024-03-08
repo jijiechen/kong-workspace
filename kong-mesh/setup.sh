@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # todo:
-# 3. support dev version
 # 4. change configuration
 
 # set -x
