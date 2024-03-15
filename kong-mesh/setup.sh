@@ -137,9 +137,10 @@ elif [ "$CLOUD_PLATFORM" == "aws" ]; then
   REGION_1=$(echo -n $REGIONS | cut -d ',' -f 1 | cut -d '=' -f 2)
   REGION_2=$(echo -n $REGIONS | cut -d ',' -f 2 | cut -d '=' -f 2)
 
-  GLOBAL_CONTEXT="gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1"
+  AWS_USER=$(aws sts get-caller-identity | jq -r '.UserId' | cut -d ':' -f 2)
+  GLOBAL_CONTEXT="${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_1}.eksctl.io"
   if [ "$MULTIZONE" == "1" ]; then
-    ZONE_CONTEXTS="eu=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_team-mesh_${REGION_1}_${USERNAME}-${USAGE}-2"
+    ZONE_CONTEXTS="eu=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_1}.eksctl.io,asia=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_2}.eksctl.io"
   fi
 elif [ "$CLOUD_PLATFORM" == "azure" ]; then
   # create the clusters...
