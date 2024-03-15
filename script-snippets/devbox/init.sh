@@ -1,5 +1,5 @@
-sudo apt-get update
-sudo apt-get remove needrestart
+sudo apt-get update -y
+sudo apt-get remove -y needrestart
 sudo apt-get install -y unzip jq
 sudo apt-get install -y build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev libffi-dev python3-pip
 

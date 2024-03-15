@@ -28,6 +28,13 @@ if [[ "$PROJ_NAME" == "kuma" ]]; then
 fi
 REPO_PATH=$HOME/go/src/github.com/$REPO_ORG/$PROJ_NAME
 cd $REPO_PATH
+
+if [ ! -z "$(git status --porcelain)" ]; then 
+  echo "Working tree is not git-clean at '$REPO_PATH'"
+  echo "Please commit or stash them before executing this action"
+  exit 1
+fi
+
 GIT_SHA=$(git rev-parse HEAD)
 
 make images
