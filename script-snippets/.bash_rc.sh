@@ -70,7 +70,9 @@ alias pdos='pods'
 
 
 export PATH=$HOME/go/bin:$HOME/kong-mesh-2.5.1/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
-eval $(crc oc-env)
+if type crc 2 >/dev/null ; then
+  eval $(crc oc-env)
+fi
 
 export GOPRIVATE="github.com/Kong/*"
 export NAP_CONFIG="~/.nap/config.yaml"
