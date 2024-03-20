@@ -55,25 +55,22 @@ function klog(){
 }
 
 alias klogs=klog
-alias km='cd ~/go/src/github.com/Kong/kong-mesh'
-alias kmu='cd ~/go/src/github.com/Kong/kong-mesh-gui'
-alias kmesh='cd ~/go/src/github.com/Kong/kong-mesh'
-
+alias day='cd ~/go/src/github.com/jijiechen/kong-workspace/day'
 alias kuma='cd ~/go/src/github.com/jijiechen/kuma'
-alias kumu='cd ~/go/src/github.com/jijiechen/kuma-gui'
-
+alias km='cd ~/go/src/github.com/Kong/kong-mesh'
 
 alias kuma0='export KUBECONFIG=~/.kube/kind-kuma-config'
 alias kuma1='export KUBECONFIG=~/.kube/kind-kuma-1-config'
 alias kuma2='export KUBECONFIG=~/.kube/kind-kuma-2-config'
 
+alias preview="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mesh/preview.sh"
 
 alias clera='clear'
 alias pdos='pods'
 
 
 export PATH=$HOME/go/bin:$HOME/kong-mesh-2.5.1/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
-
+eval $(crc oc-env)
 
 export GOPRIVATE="github.com/Kong/*"
 export NAP_CONFIG="~/.nap/config.yaml"
