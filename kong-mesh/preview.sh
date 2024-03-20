@@ -69,10 +69,6 @@ if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers)" ]]; then
     # oc login -u kubeadmin https://api.crc.testing:6443
     
     docker login -u $(oc whoami) -p $(oc whoami --show-token) default-route-openshift-image-registry.apps-crc.testing
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job 
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job
-
     if [[ -z "$(oc get project | grep $PROJ_NAME-system)" ]]; then
         oc new-project $PROJ_NAME-system --display-name "$PROJ_NAME System"
     fi
@@ -85,21 +81,37 @@ if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers)" ]]; then
 
         docker tag "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
         docker push "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
-        
-        # oc policy add-role-to-user system:image-puller system:serviceaccount:kuma-demo:default -n kuma-system
     done
     
-    echo "Please execute manually to install the control plane:"
     SETTINGS_PREFIX=
     if [[ "$PROJ_NAME" == "kong-mesh" ]]; then
         SETTINGS_PREFIX=kuma.
     fi
-    echo "helm install $PROJ_NAME --create-namespace --namespace $PROJ_NAME-system --set "${SETTINGS_PREFIX}controlPlane.mode=standalone" --set "global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system" $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz"
+
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job 
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job
+
+    echo "Installing ${PROJ_NAME} control plane..."
+    helm install $PROJ_NAME --namespace $PROJ_NAME-system \
+        --set "${SETTINGS_PREFIX}controlPlane.mode=standalone" \
+        --set "global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system" \
+        $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+
+
+    echo ""
+    echo ""
+    echo "If you want to enable pulling image from ${PROJ_NAME}-system namespace, please run the following command:"
+    echo "Please change 'kuma-demo' to whatever your application ns:"
+    echo "oc policy add-role-to-user system:image-puller system:serviceaccount:kuma-demo:default -n ${PROJ_NAME}-system"
 else
+    K3D_CLUSTER_NAME="${USER}-poc-1"
+    if [[ ! -z "$(k3d cluster list | grep $K3D_CLUSTER_NAME)" ]]; then
+        k3d cluster delete $K3D_CLUSTER_NAME
+    fi
     $SCRIPT_PATH/setup.sh --create-cluster
 
     ALL_IMAGES=$(IFS=' '; echo "${IMAGES[*]}")
-    K3D_CLUSTER_NAME="${USER}-poc-1"
     for i in 1 2 3 4 5; do
         if k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} $ALL_IMAGES --verbose ; then
             break
@@ -109,4 +121,3 @@ else
     done
     $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 fi
-
