@@ -2,6 +2,12 @@
 
 # set -x
 
+PROJ_NAME=$1
+if [[ "$PROJ_NAME" != "kong-mesh" ]] && [[ "$PROJ_NAME" != "kuma" ]]; then
+    echo "Only 'kuma' or 'kong-mesh' supported."
+    exit 1
+fi
+
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 pushd $(pwd)
 GIT_SHA=
@@ -13,11 +19,6 @@ function restore_state(){
 }
 trap restore_state EXIT INT QUIT TERM
 
-PROJ_NAME=$1
-if [[ "$PROJ_NAME" != "kong-mesh" ]] && [[ "$PROJ_NAME" != "kuma" ]]; then
-    echo "Only 'kuma' or 'kong-mesh' supported."
-    exit 1
-fi
 
 REPO_ORG=Kong
 if [[ "$PROJ_NAME" == "kuma" ]]; then
@@ -41,19 +42,17 @@ make images
 make docker/tag
 
 make helm/update-version
-yq -i 'del(.dependencies)' $REPO_PATH/deployments/charts/kong-mesh/Chart.yaml
+yq -i 'del(.dependencies)' $REPO_PATH/deployments/charts/$PROJ_NAME/Chart.yaml
 
 git add -u deployments/charts
 git commit --allow-empty -m "ci(helm): update versions"
 
-VERSION=$(yq '.version' deployments/charts/kong-mesh/Chart.yaml)
+VERSION=$(yq '.version' deployments/charts/$PROJ_NAME/Chart.yaml)
 make helm/package || true
 if [[ ! -f ".cr-release-packages/${PROJ_NAME}-${VERSION}.tgz" ]]; then
     echo "Failed to package helm chart"
     exit 1
 fi
-
-$SCRIPT_PATH/setup.sh --create-cluster
 
 APPS=(kuma-universal kuma-cni kuma-init kuma-dp kuma-cp kumactl)
 declare -a IMAGES
@@ -65,15 +64,49 @@ for APP in "${APPS[@]}"; do
     IMAGES+=( "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" )
 done
 
-ALL_IMAGES=$(IFS=' '; echo "${IMAGES[*]}")
-K3D_CLUSTER_NAME="${USER}-poc-1"
-for i in 1 2 3 4 5; do
-    if k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} $ALL_IMAGES --verbose ; then
-        break
-    else
-        echo "Image import failed. Retrying..."; 
-    fi
-done
+if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers)" ]]; then
+    # if using an OpenShift cluster, please import its CA cert into system keychain access and trust it
+    # oc login -u kubeadmin https://api.crc.testing:6443
+    
+    docker login -u $(oc whoami) -p $(oc whoami --show-token) default-route-openshift-image-registry.apps-crc.testing
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job 
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job
 
-$SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+    if [[ -z "$(oc get project | grep $PROJ_NAME-system)" ]]; then
+        oc new-project $PROJ_NAME-system --display-name "$PROJ_NAME System"
+    fi
+    oc project $PROJ_NAME-system
+
+    for APP in "${APPS[@]}"; do
+        if [[ -z "$(oc get imagestream -n $PROJ_NAME-system -o Name)" ]]; then
+            oc create imagestream $APP
+        fi
+
+        docker tag "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
+        docker push "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
+        
+        # oc policy add-role-to-user system:image-puller system:serviceaccount:kuma-demo:default -n kuma-system
+    done
+    
+    echo "Please execute manually to install the control plane:"
+    SETTINGS_PREFIX=
+    if [[ "$PROJ_NAME" == "kong-mesh" ]]; then
+        SETTINGS_PREFIX=kuma.
+    fi
+    echo "helm install $PROJ_NAME --create-namespace --namespace $PROJ_NAME-system --set "${SETTINGS_PREFIX}controlPlane.mode=standalone" --set "global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system" $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz"
+else
+    $SCRIPT_PATH/setup.sh --create-cluster
+
+    ALL_IMAGES=$(IFS=' '; echo "${IMAGES[*]}")
+    K3D_CLUSTER_NAME="${USER}-poc-1"
+    for i in 1 2 3 4 5; do
+        if k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} $ALL_IMAGES --verbose ; then
+            break
+        else
+            echo "Image import failed. Retrying..."; 
+        fi
+    done
+    $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+fi
 
