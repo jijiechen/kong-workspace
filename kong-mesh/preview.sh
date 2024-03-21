@@ -3,6 +3,7 @@
 # set -x
 
 PROJ_NAME=$1
+PACKAGE_ONLY=$2
 if [[ "$PROJ_NAME" != "kong-mesh" ]] && [[ "$PROJ_NAME" != "kuma" ]]; then
     echo "Only 'kuma' or 'kong-mesh' supported."
     exit 1
@@ -64,7 +65,25 @@ for APP in "${APPS[@]}"; do
     IMAGES+=( "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" )
 done
 
+IS_OPENSHIFT=
 if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers)" ]]; then
+    IS_OPENSHIFT=1
+fi
+
+if [[ ! -z "${PACKAGE_ONLY}" ]]; then
+    echo "Please load images to the cluster and run the command manually:"
+    echo "helm install $PROJ_NAME --namespace $PROJ_NAME-system \\"
+    echo "    --set \"${SETTINGS_PREFIX}controlPlane.mode=standalone\" \\"
+    if [[ ! -z "$IS_OPENSHIFT" ]]; then
+        echo "    --set \"global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system\" \\"
+    fi
+    echo "    $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz"
+
+
+    exit 0
+fi
+
+if [[ ! -z "${IS_OPENSHIFT}" ]]; then
     # if using an OpenShift cluster, please import its CA cert into system keychain access and trust it
     # oc login -u kubeadmin https://api.crc.testing:6443
     
