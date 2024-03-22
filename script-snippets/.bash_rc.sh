@@ -77,6 +77,10 @@ export GOPRIVATE="github.com/Kong/*"
 export NAP_CONFIG="~/.nap/config.yaml"
 export GIT_PERSONAL_ORG=jijiechen
 
+# remove "full path" from bash prompt on ubuntu
+if [[ -z "$ZSH" ]]; then
+export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
+fi
 
 git config --global alias.co checkout
 git config --global alias.chekcout checkout
