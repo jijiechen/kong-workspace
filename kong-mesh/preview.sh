@@ -66,7 +66,7 @@ for APP in "${APPS[@]}"; do
 done
 
 IS_OPENSHIFT=
-if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers)" ]]; then
+if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers --request-timeout 3)" ]]; then
     IS_OPENSHIFT=1
 fi
 
@@ -77,52 +77,12 @@ if [[ ! -z "${PACKAGE_ONLY}" ]]; then
     if [[ ! -z "$IS_OPENSHIFT" ]]; then
         echo "    --set \"global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system\" \\"
     fi
-    echo "    $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz"
-
-
+    echo "    $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz"
     exit 0
 fi
 
 if [[ ! -z "${IS_OPENSHIFT}" ]]; then
-    # if using an OpenShift cluster, please import its CA cert into system keychain access and trust it
-    # oc login -u kubeadmin https://api.crc.testing:6443
-    
-    docker login -u $(oc whoami) -p $(oc whoami --show-token) default-route-openshift-image-registry.apps-crc.testing
-    if [[ -z "$(oc get project | grep $PROJ_NAME-system)" ]]; then
-        oc new-project $PROJ_NAME-system --display-name "$PROJ_NAME System"
-    fi
-    oc project $PROJ_NAME-system
-
-    for APP in "${APPS[@]}"; do
-        if [[ -z "$(oc get imagestream -n $PROJ_NAME-system -o Name)" ]]; then
-            oc create imagestream $APP
-        fi
-
-        docker tag "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
-        docker push "default-route-openshift-image-registry.apps-crc.testing/$PROJ_NAME-system/${APP}:${VERSION}"
-    done
-    
-    SETTINGS_PREFIX=
-    if [[ "$PROJ_NAME" == "kong-mesh" ]]; then
-        SETTINGS_PREFIX=kuma.
-    fi
-
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job 
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job
-
-    echo "Installing ${PROJ_NAME} control plane..."
-    helm install $PROJ_NAME --namespace $PROJ_NAME-system \
-        --set "${SETTINGS_PREFIX}controlPlane.mode=standalone" \
-        --set "global.image.registry=image-registry.openshift-image-registry.svc:5000/$PROJ_NAME-system" \
-        $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
-
-
-    echo ""
-    echo ""
-    echo "If you want to enable pulling image from ${PROJ_NAME}-system namespace, please run the following command:"
-    echo "Please change 'kuma-demo' to whatever your application ns:"
-    echo "oc policy add-role-to-user system:image-puller system:serviceaccount:kuma-demo:default -n ${PROJ_NAME}-system"
+    $SCRIPT_PATH/install-prebuilt-images-on-ocp.sh $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 else
     K3D_CLUSTER_NAME="${USER}-poc-1"
     if [[ ! -z "$(k3d cluster list | grep $K3D_CLUSTER_NAME)" ]]; then
@@ -138,5 +98,5 @@ else
             echo "Image import failed. Retrying..."; 
         fi
     done
-    $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $(pwd)/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+    $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 fi
