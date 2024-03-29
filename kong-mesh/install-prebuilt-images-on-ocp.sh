@@ -5,10 +5,10 @@ VERSION=$2
 
 REPO_PATH='<REPO_PATH>'
 DO_INSTALL=
-if [[ "$#" == "1" ]] && [[ "$PROJ_NAME" == "*/*" ]]; then
+if [[ "$#" == "1" ]] && [[ "$PROJ_NAME" == *"/"* ]]; then
     DO_INSTALL=1
-    REPO_PATH=$1
-    FILE_NAME=$($REPO_PATH | rev | awk -F '/' '{print $1}' | rev)
+    REPO_PATH="$( cd -- "$(dirname "$1")/.." >/dev/null 2>&1 ; pwd -P )"
+    FILE_NAME=$(echo $1 | rev | awk -F '/' '{print $1}' | rev)
     PROJ_NAME=$(echo $FILE_NAME | awk -F '-0.0.0' '{print $1}')
     VERSION=$(echo $FILE_NAME | awk -F '0.0.0-' '{print $2}')
     VERSION=0.0.0-${VERSION%.tgz}
