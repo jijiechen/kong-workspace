@@ -53,9 +53,9 @@ if [[ "$PROJ_NAME" == "kong-mesh" ]]; then
 fi
 
 if [[ ! -z "$DO_INSTALL" ]]; then
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job 
-    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-install-crds
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-patch-ns-job 
+    oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-pre-delete-job
     oc policy add-role-to-user system:image-puller system:serviceaccount:kube-system:${PROJ_NAME}-cni -n ${PROJ_NAME}-system
 
     echo "Installing ${PROJ_NAME} control plane..."
@@ -72,9 +72,9 @@ if [[ ! -z "$DO_INSTALL" ]]; then
 else
     echo "Execute following commands to install the control plane:"
     echo ""
-    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-install-crds"
-    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-patch-ns-job"
-    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:kuma-system:kuma-pre-delete-job"
+    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-install-crds"
+    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-patch-ns-job"
+    echo "oc adm policy add-scc-to-user nonroot-v2 system:serviceaccount:${PROJ_NAME}-system:${PROJ_NAME}-pre-delete-job"
     echo "oc policy add-role-to-user system:image-puller system:serviceaccount:kube-system:${PROJ_NAME}-cni -n ${PROJ_NAME}-system"
 
     echo "helm install $PROJ_NAME --namespace $PROJ_NAME-system \\"

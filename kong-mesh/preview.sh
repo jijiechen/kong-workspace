@@ -92,7 +92,7 @@ else
 
     ALL_IMAGES=$(IFS=' '; echo "${IMAGES[*]}")
     for i in 1 2 3 4 5; do
-        if k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} $ALL_IMAGES --verbose ; then
+        if eval "k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} ${ALL_IMAGES}" ; then
             break
         else
             echo "Image import failed. Retrying..."; 

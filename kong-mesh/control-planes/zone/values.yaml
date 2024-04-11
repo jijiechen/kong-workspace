@@ -2,9 +2,6 @@ kuma:
   controlPlane:
     mode: standalone
   cni:
-    enabled: false
-    chained: true
-    netDir: /var/lib/rancher/k3s/agent/etc/cni/net.d/
-    binDir: /bin/
-    confName: 10-flannel.conflist
-    namespace: kube-system
+    # enabled: true
+    chained: false
+    # netDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
