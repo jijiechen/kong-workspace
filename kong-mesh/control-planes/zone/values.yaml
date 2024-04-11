@@ -1,6 +1,6 @@
 kuma:
   controlPlane:
-    mode: standalone
+    mode: zone
   cni:
     # enabled: true
     chained: false
