@@ -63,7 +63,8 @@ alias kuma0='export KUBECONFIG=~/.kube/kind-kuma-config'
 alias kuma1='export KUBECONFIG=~/.kube/kind-kuma-1-config'
 alias kuma2='export KUBECONFIG=~/.kube/kind-kuma-2-config'
 
-alias preview="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mesh/preview.sh"
+alias preview="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mesh/preview-source.sh"
+alias preview-release="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mesh/preview-release.sh"
 
 alias clera='clear'
 alias pdos='pods'

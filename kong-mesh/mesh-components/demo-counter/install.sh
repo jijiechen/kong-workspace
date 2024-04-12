@@ -3,6 +3,8 @@
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 if [ ! -d "$SCRIPT_PATH/kuma-counter-demo" ]; then
     git clone https://github.com/kumahq/kuma-counter-demo.git
+else
+    (cd $SCRIPT_PATH/kuma-counter-demo ; git pull)
 fi
 
 kubectl apply -f $SCRIPT_PATH/kuma-counter-demo/demo.yaml

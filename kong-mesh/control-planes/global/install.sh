@@ -54,6 +54,7 @@ if [[ "$CHART_FILE" == "" ]]; then
   CHART_FILE=$HELM_REPO_NAME/$HELM_CHART
 fi
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
+helm repo update
 HELM_COMMAND=(helm install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS)
 if [[ ! -z "$PRODUCT_VERSION" ]]; then
   HELM_COMMAND+=(--version $PRODUCT_VERSION)
