@@ -2,6 +2,8 @@ kuma:
   controlPlane:
     mode: zone
   cni:
-    # enabled: true
-    chained: false
-    # netDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
+    enabled: false
+    chained: true
+    confName: 10-flannel.conflist
+    netDir: /var/lib/rancher/k3s/agent/etc/cni/net.d
+    binDir: /bin
