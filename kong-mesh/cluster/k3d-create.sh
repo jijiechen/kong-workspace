@@ -4,7 +4,8 @@ set -e
 
 CLUSTER_NAME=startup-task
 NUM_NODES=1
-K3S_VERSION=v1.23.17-k3s1
+# K3S_VERSION=v1.23.17-k3s1
+K3S_VERSION=v1.29.1-k3s2
 
 while [[ $# -gt 0 ]]; do
   case $1 in
