@@ -22,6 +22,12 @@ function kuse(){
     if [[ ! -z "$FILE" ]]; then  export KUBECONFIG=$FILE; fi
   fi
 }
+
+function ktx(){
+    CTX=$(kubectl config get-contexts -o name | gum filter --placeholder 'select a context')
+    if [[ ! -z "$CTX" ]]; then  kubectl config use-context "$CTX"; fi
+}
+
 function kls(){
   CTX=$(kubectl config get-contexts -o name | gum filter --placeholder 'select a context...')
   if [[ ! -z "$CTX" ]]; then  kubectl config use-context $CTX; fi
