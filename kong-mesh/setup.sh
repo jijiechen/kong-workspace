@@ -103,9 +103,9 @@ if [[ "$COMPONENTS" == *"demo"* ]]; then
   INSTALL_DEMO=1
 fi
 
-REGIONS_GCP=eu=europe-west1-c,asia=asia-east1-a
-REGIONS_AWS=eu=eu-west-3,asia=ap-southeast-1
-REGIONS_AZURE=eu=germany,asia=eastasia
+REGIONS_GCP=zone1=asia-east1-a,zone2=europe-west1-c
+REGIONS_AWS=zone1=ap-northeast-1,zone2=ap-southeast-1
+REGIONS_AZURE=zone1=eastasia,zone2=germany
 REGIONS=
 GLOBAL_CONTEXT=
 ZONE_CONTEXTS=
@@ -118,7 +118,7 @@ COLOR_NONE='\033[0m' # No Color
 if [ "$CLOUD_PLATFORM" == "k3d" ]; then
   GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
   if [ "$MULTIZONE" == "1" ]; then
-    ZONE_CONTEXTS="eu=k3d-${USERNAME}-${USAGE}-1,asia=k3d-${USERNAME}-${USAGE}-2"
+    ZONE_CONTEXTS="zone1=k3d-${USERNAME}-${USAGE}-1,zone2=k3d-${USERNAME}-${USAGE}-2"
   fi
 elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
   # create the clusters...
@@ -129,7 +129,7 @@ elif [ "$CLOUD_PLATFORM" == "gcp" ]; then
 
   GLOBAL_CONTEXT="gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1"
   if [ "$MULTIZONE" == "1" ]; then
-    ZONE_CONTEXTS="eu=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1,asia=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-2"
+    ZONE_CONTEXTS="zone1=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-1,zone2=gke_${CUR_PROJECT}_${REGION_1}_${USERNAME}-${USAGE}-2"
   fi
 elif [ "$CLOUD_PLATFORM" == "aws" ]; then
   # create the clusters...
@@ -140,7 +140,7 @@ elif [ "$CLOUD_PLATFORM" == "aws" ]; then
   AWS_USER=$(aws sts get-caller-identity | jq -r '.UserId' | cut -d ':' -f 2)
   GLOBAL_CONTEXT="${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_1}.eksctl.io"
   if [ "$MULTIZONE" == "1" ]; then
-    ZONE_CONTEXTS="eu=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_1}.eksctl.io,asia=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_2}.eksctl.io"
+    ZONE_CONTEXTS="zone1=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_1}.eksctl.io,zone2=${AWS_USER}@${USERNAME}-${USAGE}-1.${REGION_2}.eksctl.io"
   fi
 elif [ "$CLOUD_PLATFORM" == "azure" ]; then
   # create the clusters...
@@ -150,7 +150,7 @@ elif [ "$CLOUD_PLATFORM" == "azure" ]; then
 
   GLOBAL_CONTEXT="az_${REGION_1}_${USERNAME}-${USAGE}-1"
   if [ "$MULTIZONE" == "1" ]; then
-    ZONE_CONTEXTS="eu=az_${REGION_1}_${USERNAME}-${USAGE}-1,asia=az_${REGION_1}_${USERNAME}-${USAGE}-2"
+    ZONE_CONTEXTS="zone1=az_${REGION_1}_${USERNAME}-${USAGE}-1,zone2=az_${REGION_1}_${USERNAME}-${USAGE}-2"
   fi
 else
   echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
