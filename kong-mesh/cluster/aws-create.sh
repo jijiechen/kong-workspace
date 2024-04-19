@@ -40,11 +40,14 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-
+if [[ "$NUM_NODES" -lt 2 ]]; then
+NUM_NODES=2
+fi
 
 eksctl create cluster --name ${CLUSTER_NAME} --instance-prefix ${CLUSTER_NAME} \
   --region ${REGION} --node-type ${MACHINE_TYPE} \
-  --nodes 2  --nodes-min 2  --nodes-max 2 \
+  --nodes $NUM_NODES  --nodes-min $NUM_NODES  --nodes-max $NUM_NODES \
+  --max-pods-per-node 100
   --managed --spot
 
   if [ $? -eq 0 ]
