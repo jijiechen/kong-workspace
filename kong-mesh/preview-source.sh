@@ -39,16 +39,16 @@ fi
 
 GIT_SHA=$(git rev-parse HEAD)
 
+make dev/tools
 make images
 make docker/tag
 
 make helm/update-version
+VERSION=$(yq '.version' deployments/charts/$PROJ_NAME/Chart.yaml)
 yq -i 'del(.dependencies)' $REPO_PATH/deployments/charts/$PROJ_NAME/Chart.yaml
-
 git add -u deployments/charts
 git commit --allow-empty -m "ci(helm): update versions"
 
-VERSION=$(yq '.version' deployments/charts/$PROJ_NAME/Chart.yaml)
 make helm/package || true
 if [[ ! -f ".cr-release-packages/${PROJ_NAME}-${VERSION}.tgz" ]]; then
     echo "Failed to package helm chart"
@@ -98,5 +98,6 @@ else
             echo "Image import failed. Retrying..."; 
         fi
     done
-    $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME --version $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+    $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME \
+    --version $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 fi
