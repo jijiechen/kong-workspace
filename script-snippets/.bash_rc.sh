@@ -60,6 +60,20 @@ function klog(){
   fi
 }
 
+function netshoot(){
+  NS=$1
+  if [[ "$NS" == "" ]]; then
+    NS=kuma-demo
+  fi
+
+  EXISTING=$(kubectl -n $NS get pods mycurlpod -o Name || true)
+  if [[ "$EXISTING" != "" ]]; then
+    kubectl -n $NS exec -it mycurlpod -c mycurlpod -- bash
+  else
+    kubectl run -n $NS mycurlpod --image=nicolaka/netshoot -i --tty -- bash
+  fi
+}
+
 alias klogs=klog
 alias day='cd ~/go/src/github.com/jijiechen/kong-workspace/day'
 alias kuma='cd ~/go/src/github.com/jijiechen/kuma'
