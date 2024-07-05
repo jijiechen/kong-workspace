@@ -26,7 +26,7 @@ spec:
       - port: 80
         protocol: HTTP
         tags:
-          port: http/80
+          port: http_8080
 
 
 ---
@@ -43,6 +43,8 @@ spec:
   targetRef:
     kind: MeshGateway
     name: edge-gateway
+    tags:
+      port: http_8080
   to:
   - targetRef:
       kind: Mesh
