@@ -1,0 +1,20 @@
+
+type: MeshHTTPRoute
+mesh: default
+name: edge-gateway-route
+spec:
+  targetRef:
+    kind: MeshGateway
+    name: edge-gateway
+  to:
+  - targetRef:
+      kind: Mesh
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: "/"
+      default:
+        backendRefs:
+        - kind: MeshService
+          name: demo-app_kuma-demo_svc_5000

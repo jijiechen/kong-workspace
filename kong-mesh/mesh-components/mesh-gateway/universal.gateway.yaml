@@ -1,0 +1,37 @@
+type: MeshGateway
+mesh: default
+name: edge-gateway
+selectors:
+  - match:
+      kuma.io/service: edge-gateway
+conf:
+  listeners:
+    - port: 8080
+      protocol: HTTP
+      tags:
+        port: http/8080
+---
+
+type: MeshHTTPRoute
+name: edge-gateway-route
+mesh: default
+spec:
+  targetRef:
+    kind: MeshGateway
+    name: edge-gateway
+    tags:
+      port: http_8080
+  to:
+  - targetRef:
+      kind: Mesh
+    hostnames:
+    - example.com
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: "/"
+      default:
+        backendRefs:
+        - kind: MeshService
+          name: demo-app_kuma-demo_svc_5000
