@@ -70,6 +70,10 @@ while [[ $# -gt 0 ]]; do
       INSTALL_CONTROL_PLANE=1
       shift
       ;;
+    --controlplane)
+      INSTALL_CONTROL_PLANE=1
+      shift
+      ;;
     --multizone)
       MULTIZONE=1
       shift

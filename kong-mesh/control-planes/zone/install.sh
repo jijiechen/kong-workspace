@@ -49,7 +49,7 @@ fi
 
 HELM_COMMAND=(helm install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS -f "$VALUES_FILE")
 if [[ "$SYNC_ENDPOINT" == "" ]]; then
-  HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=standalone")
+  HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=zone")
 else
   HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=zone" \
     --set "${SETTING_PREFIX}controlPlane.zone=$ZONE_NAME" \
