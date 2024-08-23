@@ -47,7 +47,7 @@ fi
 eksctl create cluster --name ${CLUSTER_NAME} --instance-prefix ${CLUSTER_NAME} \
   --region ${REGION} --node-type ${MACHINE_TYPE} \
   --nodes $NUM_NODES  --nodes-min $NUM_NODES  --nodes-max $NUM_NODES \
-  --max-pods-per-node 100
+  --max-pods-per-node 100 \
   --managed --spot
 
   if [ $? -eq 0 ]

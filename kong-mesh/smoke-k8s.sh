@@ -8,7 +8,9 @@ PREV_VER=$3
 
 MODE=zone
 # for versions < 2.6:
-# MODE=standalone
+if [[ "${THIS_VER}" == "2.4"* ]] || [[ "${THIS_VER}" == "2.5"* ]]; then
+MODE=standalone
+fi
 
 WORK_DIR=smoke-k8s-$THIS_VER-$RANDOM
 mkdir -p $WORK_DIR
@@ -93,4 +95,5 @@ kubectl -n kuma-demo rollout restart deploy/demo-app
 kubectl -n kuma-demo rollout status deploy/demo-app
 dump_info '2-upgrade.2'
 
+echo "Working directory: $WORK_DIR"
 echo "Finished."
