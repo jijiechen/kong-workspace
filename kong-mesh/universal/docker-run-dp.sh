@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -e
 
 # export KUMA_CP_CONTAINER_NAME=$(run-cp.sh | grep 'Container:' | awk '{print $1}')
 PRODUCT=$1
@@ -55,14 +55,14 @@ CP_NETWORK=$(docker inspect $KUMA_CP_CONTAINER_NAME | jq -r '.[0].NetworkSetting
 # write the kumactl.config
 docker run --rm --name $CONTAINER_NAME_CLI --network $CP_NETWORK -v $(pwd):/host $CLI_IMAGE config control-planes add --name cp --address http://$KUMA_CP_IP_ADDR:5681 --auth-type tokens --auth-conf token=$KUMA_CP_TOKEN --config-file /host/$WORK_DIR/kumactl.config
 
-# generate the tokem
-docker run --rm --name $CONTAINER_NAME_CLI --network $CP_NETWORK -v $(pwd):/host $CLI_IMAGE generate dataplane-token --tag kuma.io/service=demo-app --valid-for=720h --config-file /host/$WORK_DIR/kumactl.config > ./$WORK_DIR/dataplane-token
+# generate the token
+docker run --rm --name $CONTAINER_NAME_CLI --network $CP_NETWORK -v $(pwd):/host $CLI_IMAGE generate dataplane-token --tag kuma.io/service=demo-app-$RUN_ID --valid-for=720h --config-file /host/$WORK_DIR/kumactl.config > ./$WORK_DIR/dataplane-token
 
 echo ""
 cat << EOF > ./$WORK_DIR/dataplane.yaml
 type: Dataplane
 mesh: default
-name: demo-app.universal
+name: demo-app-$RUN_ID
 networking: 
   address: 127.0.0.1
   inbound: 
