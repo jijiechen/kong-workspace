@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin-%
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpbin-%
+  labels:
+    app: httpbin-%
+    service: httpbin-%
+spec:
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8080
+    protocol: TCP
+    appProtocol: http
+  selector:
+    app: httpbin-%
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpbin-%
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: httpbin-%
+      version: v1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: httpbin-%
+        version: v1
+      annotations:
+        kuma.io/transparent-proxying-reachable-services: "no_service"
+    spec:
+      serviceAccountName: httpbin-%
+      containers:
+      - image: docker.io/kong/httpbin
+        imagePullPolicy: IfNotPresent
+        name: httpbin
+        # Same as found in Dockerfile's CMD but using an unprivileged port
+        command:
+        - gunicorn
+        - -b
+        - 0.0.0.0:8080
+        - httpbin:app
+        - -k
+        - gevent
+        env:
+        # Tells pipenv to use a writable directory instead of $HOME
+        - name: WORKON_HOME
+          value: /tmp
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 30m
+            memory: 48Mi
