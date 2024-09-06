@@ -89,7 +89,7 @@ alias preview-release="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mes
 alias clera='clear'
 alias pdos='pods'
 
-export PATH=$HOME/go/bin:$HOME/kong-mesh-2.5.1/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
+export PATH=$HOME/go/bin:$HOME/kong-mesh-2.8.1/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
 if type crcd >/dev/null 2>&1 ; then
   eval $(crc oc-env)
 fi
