@@ -71,7 +71,7 @@ networking:
         kuma.io/service: demo-app
         kuma.io/protocol: http
   admin:
-    port: 9902
+    port: 9901
 EOF
 docker run -d --name $CONTAINER_NAME_DP --network $NETWORK_NAME -v $(pwd):/host $DP_IMAGE run \
   --cp-address=https://$CP_IP_ADDR:5678 \

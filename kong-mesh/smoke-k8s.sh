@@ -90,7 +90,13 @@ echo "UPGRADE: Upgrading control plane to version ${THIS_VER}..."
 ./${PRODUCT}-${THIS_VER}/bin/kumactl install control-plane --mode $MODE \
        --namespace ${PRODUCT}-system  | kubectl apply -f -
 kubectl -n ${PRODUCT}-system rollout status deploy/${PRODUCT}-control-plane
-sleep 10
+
+NOT_UPGRADED_PODS="Waiting for pods of existing version to terminate..."
+until [[ -z "$NOT_UPGRADED_PODS" ]]; do
+    sleep 3
+    NOT_UPGRADED_PODS=$(kubectl -n ${PRODUCT}-system get pods -l app=${PRODUCT}-control-plane -o yaml | grep ":$PREV_VER" || true)
+done
+
 kubectl -n kuma-demo rollout restart deploy/demo-app
 kubectl -n kuma-demo rollout status deploy/demo-app
 dump_info '2-upgrade.2'
