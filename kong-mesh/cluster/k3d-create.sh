@@ -47,7 +47,7 @@ fi
 CLS_COUNTER=$(k3d cluster list --no-headers | wc -l)
 SUBNET_ID=$((CLS_COUNTER+50))
 LB_NET_PREFIX="${NETWORK_ADDR_SPACE[0]}.${NETWORK_ADDR_SPACE[1]}.${SUBNET_ID}.0"
-PORT_PREFIX=$((400+10*CLS_COUNTER))
+PORT_PREFIX=$((400+20*CLS_COUNTER))
 function k3d_node_opts(){
     for IDX in $(seq 0 $((NUM_NODES-1))); do
         echo -n " --k3s-arg --disable=traefik@server:$IDX \
