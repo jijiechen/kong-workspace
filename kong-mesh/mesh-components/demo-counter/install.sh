@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ZONE=$1
+
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 if [ ! -d "$SCRIPT_PATH/kuma-counter-demo" ]; then
     git clone https://github.com/kumahq/kuma-counter-demo.git
@@ -7,7 +9,12 @@ else
     (cd $SCRIPT_PATH/kuma-counter-demo ; git pull)
 fi
 
-kubectl apply -f $SCRIPT_PATH/kuma-counter-demo/demo.yaml
+if [[ ! -z "$ZONE" ]]; then
+    sed "s/\"local\"/\"$ZONE\"/g" $SCRIPT_PATH/kuma-counter-demo/demo.yaml | kubectl apply -f -
+else
+    kubectl apply -f $SCRIPT_PATH/kuma-counter-demo/demo.yaml
+fi
+
 kubectl wait --namespace kuma-demo deployment/demo-app --for=condition=Available --timeout=60s
 
 # kubectl apply -f ./kuma-counter-demo/demo-v2.yaml
