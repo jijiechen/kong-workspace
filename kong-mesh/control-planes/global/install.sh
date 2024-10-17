@@ -6,21 +6,22 @@ GLOBAL_NS=$3
 
 echo "Installing new global control plane in namespace $GLOBAL_NS..."
 
-HELM_RELEASE_NAME=postgres-${PRODUCT_NAME}-cp
-BASE64_HOST=$(echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64 -w 0 2>/dev/null || echo -n "${HELM_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64)
+POSTGRES_RELEASE_NAME=postgres-${PRODUCT_NAME}-cp
+BASE64_HOST=$(echo -n "${POSTGRES_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64 -w 0 2>/dev/null || echo -n "${POSTGRES_RELEASE_NAME}-postgresql.${GLOBAL_NS}.svc" | base64)
 
 DB_PWD=$(openssl rand -base64 12)
 BASE64_PWD=$(echo -n "$DB_PWD" | base64 -w 0 2>/dev/null || echo -n "$DB_PWD" | base64)
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-echo "-> Installing PostgreSQL..."
-helm install $HELM_RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/postgresql \
-  --namespace $GLOBAL_NS --create-namespace \
-  --set "auth.username=kuma" --set "auth.password=$DB_PWD" --set "auth.database=kuma"
-cat $SCRIPT_PATH/secrets.yaml | sed "s;POSTGRES_HOSTNAME;$BASE64_HOST;g" | sed "s;RANDOM_PASSWORD;$BASE64_PWD;g" | kubectl create -n $GLOBAL_NS -f -
+if [[ -z "$(helm list -n kuma-global --short | grep $POSTGRES_RELEASE_NAME)" ]]; then
+  echo "-> Installing PostgreSQL..."
+  helm install $POSTGRES_RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/postgresql --version 16.0.3 \
+    --namespace $GLOBAL_NS --create-namespace \
+    --set "auth.username=kuma" --set "auth.password=$DB_PWD" --set "auth.database=kuma"
+  cat $SCRIPT_PATH/secrets.yaml | sed "s;POSTGRES_HOSTNAME;$BASE64_HOST;g" | sed "s;RANDOM_PASSWORD;$BASE64_PWD;g" | kubectl create -n $GLOBAL_NS -f -
+  sleep 3
+fi
 
-
-sleep 3
 echo "-> Installing global ${PRODUCT_NAME} Control Plane..."
 
 CHART_FILE=
@@ -55,7 +56,7 @@ if [[ "$CHART_FILE" == "" ]]; then
 fi
 helm repo add $HELM_REPO_NAME "$HELM_REPO_URL"
 helm repo update
-HELM_COMMAND=(helm install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS)
+HELM_COMMAND=(helm upgrade --install ${PRODUCT_NAME}  -f "$VALUES_FILE" --skip-crds --create-namespace --namespace $GLOBAL_NS)
 if [[ ! -z "$PRODUCT_VERSION" ]]; then
   HELM_COMMAND+=(--version $PRODUCT_VERSION)
 fi

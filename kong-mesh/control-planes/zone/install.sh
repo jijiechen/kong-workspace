@@ -47,7 +47,7 @@ if [[ "$CHART_FILE" == "" ]]; then
   CHART_FILE=$HELM_REPO_NAME/$HELM_CHART
 fi
 
-HELM_COMMAND=(helm install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS -f "$VALUES_FILE")
+HELM_COMMAND=(helm upgrade --install ${PRODUCT_NAME}  --create-namespace --namespace $ZONE_NS -f "$VALUES_FILE")
 if [[ "$SYNC_ENDPOINT" == "" ]]; then
   HELM_COMMAND+=(--set "${SETTING_PREFIX}controlPlane.mode=zone")
 else
