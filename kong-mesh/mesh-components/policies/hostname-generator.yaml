@@ -1,0 +1,15 @@
+
+
+apiVersion: kuma.io/v1alpha1
+kind: HostnameGenerator
+metadata:
+  name: all
+  namespace: kuma-system
+  labels:
+    kuma.io/mesh: default
+spec:
+  selector:
+    meshService:
+      matchLabels:
+        k8s.kuma.io/namespace: kuma-demo
+  template: "{{ .DisplayName }}.{{ .Namespace }}.mesh"

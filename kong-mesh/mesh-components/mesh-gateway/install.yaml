@@ -39,6 +39,7 @@ metadata:
   namespace: kuma-system
   labels:
     kuma.io/mesh: default
+    # kuma.io/origin: zone
 spec:
   targetRef:
     kind: MeshGateway

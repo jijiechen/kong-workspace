@@ -1,0 +1,14 @@
+type: MeshTrafficPermission
+name: allow-gateway-to-demo-app
+mesh: default
+spec:
+  targetRef:
+    kind: MeshService
+    name: edge-gateway_kuma-demo_svc
+  from:
+    - targetRef:
+        kind: MeshSubset
+        tags:
+          kuma.io/service: demo-app_kuma-demo_svc_5000
+      default:
+        action: Allow

@@ -24,8 +24,6 @@ spec:
   to:
   - targetRef:
       kind: Mesh
-    hostnames:
-    - example.com
     rules:
     - matches:
       - path:
