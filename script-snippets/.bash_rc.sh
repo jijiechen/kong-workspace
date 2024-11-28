@@ -74,6 +74,76 @@ function netshoot(){
   fi
 }
 
+function next_available_port(){
+  START_PORT=5681
+  if [[ ! -z "$1" ]]; then
+    START_PORT=$1
+  fi
+  END_PORT=$((START_PORT+1000))
+
+  PORT=$START_PORT
+  while [[ "$PORT" -le "$END_PORT" ]]; do
+    if [[ $(uname) == "Darwin" ]]; then
+        lsof -i:"$PORT" >/dev/null 2>&1
+        # 0 means port is in use (found in result)
+        if [[ $? -ne 0 ]]; then
+          break
+        fi
+    fi
+
+    if [[ $(uname) == "Linux" ]]; then
+        nc -z localhost "$PORT" 2>/dev/null
+        # 0 means port is in use (connect successfully)
+        if [[ $? -ne 0 ]]; then
+          break
+        fi
+    fi
+
+    ((PORT++))
+  done
+  echo $PORT
+}
+
+function kmesh_license_add(){
+  if [[ -z "$KMESH_LICENSE" ]]; then
+    echo "Please specify license file path as env variable 'KMESH_LICENSE'"
+    exit 1
+  fi
+
+  SYSTEM_NS=$(kubectl get namespace kong-mesh-global -o Name 2>/dev/null || true)
+  if [[ ! -z "$SYSTEM_NS" ]]; then
+    SYSTEM_NS=kong-mesh-global
+  else
+    SYSTEM_NS=kong-mesh-system
+  fi
+
+  kubectl -n $SYSTEM_NS create secret generic kong-mesh-license --from-file=$KMESH_LICENSE 
+  kubectl -n $SYSTEM_NS patch deploy/kong-mesh-control-plane --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/env/0", "value":{ "name": "KMESH_LICENSE_INLINE", "valueFrom": {"secretKeyRef": {"name": "kong-mesh-license", "key": "license.json"}}   }}]'
+}
+
+function kuma_cp_port_forward(){
+  IS_KM=$(kubectl get namespace | grep kong-mesh)
+  if [[ -z "$IS_KM" ]]; then
+    PRODUCT=kuma
+  else
+    PRODUCT=kong-mesh
+  fi
+
+  CP_NS=$1
+  if [[ -z "$CP_NS" ]]; then
+    CP_NS=$(kubectl get namespace ${PRODUCT}-global -o Name 2>/dev/null || true)
+    if [[ ! -z "$CP_NS" ]]; then
+      CP_NS=${PRODUCT}-global
+    else
+      CP_NS=${PRODUCT}-system
+    fi
+  fi
+
+  PORT=$(next_available_port 5681)
+  echo "$PORT --> svc/${PRODUCT}-control-plane:5681 -n $CP_NS"
+  kubectl -n $CP_NS port-forward svc/${PRODUCT}-control-plane $PORT:5681
+}
+
 alias klogs=klog
 alias day='cd ~/go/src/github.com/jijiechen/kong-workspace/day'
 alias kuma='cd ~/go/src/github.com/jijiechen/kuma'
