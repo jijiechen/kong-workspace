@@ -65,6 +65,8 @@ kuse $USER-poc-1
 echo "INSTALL: install control plane version ${PREV_VER}..."
 ./${PRODUCT}-${THIS_VER}/bin/kumactl install control-plane --mode $MODE \
        --namespace ${PRODUCT}-system  | kubectl apply -f -
+# to install using helm
+# ${SCRIPT_PATH}/control-planes/zone/install.sh ${PRODUCT} ${THIS_VER} default ${PRODUCT}-system
 kubectl wait --timeout=90s --for=condition=Ready -n ${PRODUCT}-system --all pods
 ${SCRIPT_PATH}/mesh-components/demo-counter/install.sh
 # todo: request the demo app!
@@ -87,6 +89,7 @@ dump_info '2-upgrade.1'
 
 
 echo "UPGRADE: Upgrading control plane to version ${THIS_VER}..."
+# install using kumactl
 ./${PRODUCT}-${THIS_VER}/bin/kumactl install control-plane --mode $MODE \
        --namespace ${PRODUCT}-system  | kubectl apply -f -
 kubectl -n ${PRODUCT}-system rollout status deploy/${PRODUCT}-control-plane
@@ -103,3 +106,5 @@ dump_info '2-upgrade.2'
 
 echo "Working directory: $WORK_DIR"
 echo "Finished."
+
+# todo: helm
