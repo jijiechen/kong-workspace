@@ -15,7 +15,7 @@ else
     kubectl apply -f $SCRIPT_PATH/kuma-counter-demo/demo.yaml
 fi
 
-kubectl wait --namespace kuma-demo deployment/demo-app --for=condition=Available --timeout=60s
+kubectl wait --namespace kuma-demo deployment/demo-app --for=condition=Available --timeout=600s
 
 # kubectl apply -f ./kuma-counter-demo/demo-v2.yaml
 # kubectl wait --namespace kuma-demo deployment/demo-app-v2 --for=condition=Available --timeout=60s
