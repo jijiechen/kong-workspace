@@ -4,8 +4,12 @@ alias pods='kubectl get pods -w'
 alias pod='kubectl get pods -w'
 
 function gsync(){
+  DEFAULT_BRANCH=$(git for-each-ref --format='%(refname:short)' refs/heads/ | grep -xq "main"  && echo -n "main" || echo -n "master")
   UPSREAM_BRANCH=$1
-  UPSREAM_BRANCH=${UPSREAM_BRANCH:-master}
+  if [[ -z "$UPSREAM_BRANCH" ]]; then
+    UPSREAM_BRANCH=$DEFAULT_BRANCH
+  fi
+  
   if [[ "$(git remote)" == *"upstream"* ]]; then
     git checkout $UPSREAM_BRANCH && git pull upstream $UPSREAM_BRANCH && git push origin $UPSREAM_BRANCH
   else
@@ -107,7 +111,7 @@ function next_available_port(){
 function kmesh_license_add(){
   if [[ -z "$KMESH_LICENSE" ]]; then
     echo "Please specify license file path as env variable 'KMESH_LICENSE'"
-    exit 1
+    return
   fi
 
   SYSTEM_NS=$(kubectl get namespace kong-mesh-global -o Name 2>/dev/null || true)
@@ -117,8 +121,8 @@ function kmesh_license_add(){
     SYSTEM_NS=kong-mesh-system
   fi
 
-  kubectl -n $SYSTEM_NS create secret generic kong-mesh-license --from-file=$KMESH_LICENSE 
-  kubectl -n $SYSTEM_NS patch deploy/kong-mesh-control-plane --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/env/0", "value":{ "name": "KMESH_LICENSE_INLINE", "valueFrom": {"secretKeyRef": {"name": "kong-mesh-license", "key": "license.json"}}   }}]'
+  kubectl -n $SYSTEM_NS create secret generic kong-mesh-license --from-file=$KMESH_LICENSE
+  kubectl -n $SYSTEM_NS patch deploy/kong-mesh-control-plane --type json --patch '[{"op": "add", "path": "/spec/template/spec/containers/0/env/-", "value":{ "name": "KMESH_LICENSE_INLINE", "valueFrom": {"secretKeyRef": {"name": "kong-mesh-license", "key": "license.json"}}   }}]'
 }
 
 function kuma_cp_port_forward(){
