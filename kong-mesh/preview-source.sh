@@ -55,16 +55,6 @@ if [[ ! -f ".cr-release-packages/${PROJ_NAME}-${VERSION}.tgz" ]]; then
     exit 1
 fi
 
-APPS=(kuma-universal kuma-cni kuma-init kuma-dp kuma-cp kumactl)
-declare -a IMAGES
-IAMGE_REPO_PREFIX=kong
-if [[ "$PROJ_NAME" == "kuma" ]]; then
-    IAMGE_REPO_PREFIX=kumahq
-fi
-for APP in "${APPS[@]}"; do
-    IMAGES+=( "${IAMGE_REPO_PREFIX}/${APP}:${VERSION}" )
-done
-
 IS_OPENSHIFT=
 if [[ ! -z "$(kubectl get crd builds.config.openshift.io --no-headers --request-timeout 3)" ]]; then
     IS_OPENSHIFT=1
@@ -82,7 +72,7 @@ if [[ ! -z "${PACKAGE_ONLY}" ]]; then
 fi
 
 if [[ ! -z "${IS_OPENSHIFT}" ]]; then
-    $SCRIPT_PATH/install-prebuilt-images-on-ocp.sh $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
+    $SCRIPT_PATH/load-prebuilt-images-onto-ocp.sh $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 else
     K3D_CLUSTER_NAME="${USER}-poc-1"
     if [[ ! -z "$(k3d cluster list | grep $K3D_CLUSTER_NAME)" ]]; then
@@ -90,14 +80,7 @@ else
     fi
     $SCRIPT_PATH/setup.sh --create-cluster
 
-    ALL_IMAGES=$(IFS=' '; echo "${IMAGES[*]}")
-    for i in 1 2 3 4 5; do
-        if eval "k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} ${ALL_IMAGES}" ; then
-            break
-        else
-            echo "Image import failed. Retrying..."; 
-        fi
-    done
+    $SCRIPT_PATH/load-kuma-images.sh "$PROJ_NAME" "$VERSION" "$K3D_CLUSTER_NAME"
     $SCRIPT_PATH/setup.sh --control-plane --product $PROJ_NAME \
     --version $REPO_PATH/.cr-release-packages/${PROJ_NAME}-${VERSION}.tgz
 fi

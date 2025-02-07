@@ -136,7 +136,7 @@ if [[ -z "$DP_RUNNING" ]]; then
     FAIL=1
     echo ""
     echo ""
-    echo "kuma-dp dontainer exited unexpectedly!"
+    echo "kuma-dp container exited unexpectedly!"
 fi
 
 if [[ -z "$FAIL" ]]; then
