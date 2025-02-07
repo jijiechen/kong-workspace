@@ -5,7 +5,7 @@ set -e
 CLUSTER_NAME=startup-task
 NUM_NODES=1
 # K3S_VERSION=v1.23.17-k3s1
-K3S_VERSION=v1.29.1-k3s2
+K3S_VERSION=v1.31.1-k3s1
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -55,6 +55,8 @@ function k3d_node_opts(){
         --k3s-arg --disable=servicelb@server:$IDX \
         --k3s-arg --kubelet-arg=eviction-hard=imagefs.available<1%,nodefs.available<1%@server:$IDX \
         --k3s-arg --kubelet-arg=eviction-minimum-reclaim=imagefs.available=1%,nodefs.available=1%@server:$IDX \
+        --k3s-arg --kube-apiserver-arg=service-account-extend-token-expiration=false@server:$IDX \
+        --k3s-arg --kube-apiserver-arg=service-account-max-token-expiration=1h00m0s@server:$IDX \
         --port ${PORT_PREFIX}80-${PORT_PREFIX}99:30080-30099@server:$IDX"
         PORT_PREFIX=$((PORT_PREFIX+2))
     done
