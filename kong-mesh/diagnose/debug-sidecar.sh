@@ -28,8 +28,8 @@ function enable_logging(){
 
         echo "Streaming $POD..."
         # wget -q -O - --post-data '' localhost:9901/logging?level=debug
-        kubectl -n "$NS" exec "$POD" -c $CONTAINER_NAME -- sh -c "wget -O /dev/null --post-data ''  http://localhost:9901/logging?level=debug >/dev/null 2>&1" 
-        kubectl -n "$NS" exec "$POD" -c $CONTAINER_NAME -- sh -c "wget -O /dev/stdout http://localhost:9901/config_dump?include_eds 2>/dev/null" > ./${POD}-config.json
+        kubectl -n "$NS" exec "$POD" -c $CONTAINER_NAME -- sh -c "wget -Y off -O /dev/null --post-data ''  http://localhost:9901/logging?level=debug >/dev/null 2>&1" 
+        kubectl -n "$NS" exec "$POD" -c $CONTAINER_NAME -- sh -c "wget -Y off -O /dev/stdout http://localhost:9901/config_dump?include_eds 2>/dev/null" > ./${POD}-config.json
         kubectl -n "$NS" logs "$POD" -c $CONTAINER_NAME --tail 1 -f > ./${POD}-envoy.log &
     done
 }
