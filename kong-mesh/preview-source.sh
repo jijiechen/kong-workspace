@@ -30,6 +30,7 @@ if [[ "$PROJ_NAME" == "kuma" ]]; then
 fi
 REPO_PATH=$HOME/go/src/github.com/$REPO_ORG/$PROJ_NAME
 cd $REPO_PATH
+rm -rf .cr-release-packages/
 
 if [ ! -z "$(git status --porcelain)" ]; then 
   echo "Working tree is not git-clean at '$REPO_PATH'"
