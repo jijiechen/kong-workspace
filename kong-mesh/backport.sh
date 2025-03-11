@@ -16,9 +16,9 @@ if [[ "$(git remote)" == *"upstream"* ]]; then
     REMOTE_UPSTREAM=upstream
 fi
 
-PR_JSON=$(gh pr view $PR --json 'number,title,body,mergedAt,state,mergeCommit,baseRefName' || echo '{}')
+PR_JSON=$(gh pr view $PR --json 'number,title,mergedAt,state,mergeCommit,baseRefName' || echo '{}')
+BODY=$(gh pr view $PR --json 'body' -q '.body' || echo '')
 TITLE=$(echo -n "$PR_JSON" | jq -r '.title //empty')
-BODY=$(echo -n "$PR_JSON" | jq -r '.body //empty')
 STATE=$(echo -n "$PR_JSON" | jq -r '.state //empty')
 COMMIT=$(echo -n "$PR_JSON" | jq -r '.mergeCommit.oid //empty')
 BASE_REF=$(echo -n "$PR_JSON" | jq -r '.baseRefName //empty')
