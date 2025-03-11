@@ -16,19 +16,26 @@ if [[ "$(git remote)" == *"upstream"* ]]; then
     REMOTE_UPSTREAM=upstream
 fi
 
-PR_JSON=$(gh pr view $PR --json 'number,title,mergedAt,state,mergeCommit' || echo '{}')
+PR_JSON=$(gh pr view $PR --json 'number,title,body,mergedAt,state,mergeCommit,baseRefName' || echo '{}')
 TITLE=$(echo -n "$PR_JSON" | jq -r '.title //empty')
+BODY=$(echo -n "$PR_JSON" | jq -r '.body //empty')
 STATE=$(echo -n "$PR_JSON" | jq -r '.state //empty')
 COMMIT=$(echo -n "$PR_JSON" | jq -r '.mergeCommit.oid //empty')
+BASE_REF=$(echo -n "$PR_JSON" | jq -r '.baseRefName //empty')
 if [[ "$STATE" != "MERGED" ]]; then
     >&2 printf "${YELLOW}[Backport] PR $PR is not merged${NC}\n"
     exit 1
 fi
 
+if [[ "$BASE_REF" == "$TARGET_BRANCH" ]]; then
+    >&2 printf "${YELLOW}[Backport] PR $PR was already merged to branch $TARGET_BRANCH${NC}\n"
+    exit 1
+fi
 
 if [[ "$(git remote)" == *"upstream"* ]]; then
     REMOTE_UPSTREAM=upstream
 fi
+git fetch $REMOTE_UPSTREAM
 
 if git rev-parse --verify $TARGET_BRANCH; then
     git checkout $TARGET_BRANCH
@@ -82,14 +89,39 @@ echo
 echo "[Backport] Creating a new PR in repo $REPO_FULL_NAME"
 
 
-# todo: sync changelog
+function get_change_log() {
+  awk '
+    BEGIN { in_comment = 0; changelog = "" }
+    
+    # Process each line of input
+    {
+      if (match($0, /<!--/)) {
+        in_comment = 1
+      }
+      if (in_comment && match($0, /-->/)) {
+        in_comment = 0
+      }
+      if (!in_comment && match($0, /^> Changelog: /)) {
+        changelog = $0
+      }
+    }
+    
+    # After processing all lines, print the changelog
+    END { print changelog }
+  ' <<< "$1"
+}
+
 PR_TITLE="$TITLE (backport of #${PR})"
+CHANGE_LOG=$(get_change_log "$BODY")
 PR_BODY=$(cat <<EOF
 Manual cherry-pick of #${PR} to branch \`${TARGET_BRANCH}\`
 
 cherry-picked commit ${COMMIT}
 
 ${CONFLICTS}
+
+${CHANGE_LOG}
+
 EOF
 )
 PR_LABELS="$TARGET_BRANCH"
@@ -105,6 +137,14 @@ fi
 
 UPSTREAM_REPO_OWNER=$(echo -n $REPO_FULL_NAME | cut -d '/' -f 1)
 ORIGIN_REPO_OWNER=$(git remote -v | grep origin | head -n 1 | cut -d ':' -f 2 | cut -d '/' -f 1)
+
+
+# echo "gh pr create $PR_DRAFT \\
+#  --base \"${TARGET_BRANCH}\" --head \"${ORIGIN_REPO_OWNER}:${BACKPORT_BRANCH}\" \\
+#  --title \"$PR_TITLE\" --label \"$PR_LABELS\" \\
+#  --body \"$PR_BODY\""
+# exit 0
+
 
 gh pr create $PR_DRAFT \
  --base "${TARGET_BRANCH}" --head "${ORIGIN_REPO_OWNER}:${BACKPORT_BRANCH}" \
