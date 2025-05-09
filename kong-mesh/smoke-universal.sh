@@ -13,6 +13,8 @@ if [[ -z "$VERSION" ]]; then
     exit 1
 fi
 
+POSTGRES_HOST=
+
 CP_IMAGE=kumahq/kuma-cp:$VERSION
 DP_IMAGE=kumahq/kuma-dp:$VERSION
 CLI_IMAGE=kumahq/kumactl:$VERSION
@@ -44,7 +46,21 @@ trap cleanup EXIT INT QUIT TERM
 
 echo ""
 echo "STEP 1: Starting the kuma-cp..."
-docker run -d --name $CONTAINER_NAME_CP --network $NETWORK_NAME $CP_IMAGE run --log-level info
+
+if [[ ! -z "$POSTGRES_HOST" ]]; then
+docker run -it --rm --network $NETWORK_NAME \
+  -e 'KUMA_STORE_TYPE=postgres' \
+  -e "KUMA_STORE_POSTGRES_HOST=$POSTGRES_HOST" -e 'KUMA_STORE_POSTGRES_PORT=5432' \
+  -e 'KUMA_STORE_POSTGRES_USER=kuma' -e 'KUMA_STORE_POSTGRES_PASSWORD=kuma' -e 'KUMA_STORE_POSTGRES_DB_NAME=kuma' $CP_IMAGE  migrate up
+
+docker run -d --name $CONTAINER_NAME_CP --network $NETWORK_NAME \
+  -e 'KUMA_STORE_TYPE=postgres' \
+  -e "KUMA_STORE_POSTGRES_HOST=$POSTGRES_HOST" -e 'KUMA_STORE_POSTGRES_PORT=5432' \
+  -e 'KUMA_STORE_POSTGRES_USER=kuma' -e 'KUMA_STORE_POSTGRES_PASSWORD=kuma' -e 'KUMA_STORE_POSTGRES_DB_NAME=kuma' $CP_IMAGE run --log-level info
+else
+  docker run -d --name $CONTAINER_NAME_CP --network $NETWORK_NAME $CP_IMAGE run --log-level info
+fi
+
 sleep 5
 CP_TOKEN=$(bash -c "docker exec -it $CONTAINER_NAME_CP wget -q -O - http://localhost:5681/global-secrets/admin-user-token" | jq -r .data | base64 -d)
 CP_IP_ADDR=$(docker inspect $CONTAINER_NAME_CP | jq -r ".[0].NetworkSettings.Networks[\"$NETWORK_NAME\"].IPAddress")
