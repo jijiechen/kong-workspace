@@ -1,6 +1,10 @@
 .DS_Store
 day/*
+release/*
 !day/.gitkeep
 kuma-counter-demo
+script-snippets/mesh-infra
 kong-mesh/*.tgz
 script-snippets/remote-debug-container/glibc/
+script-snippets/remote-debug-dlv/dlv/bin/*
+!script-snippets/remote-debug-dlv/dlv/bin/.gitkeep

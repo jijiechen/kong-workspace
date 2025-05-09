@@ -91,7 +91,15 @@ function br(){
 
 function br_del(){
   BRANCH=$1
-  if [[ ! -f "./.git/refs/heads/$BRANCH" ]]; then
+  EXISTS=
+  while read BRANCH_LINE; do
+    if [[ "${BRANCH}" == "$BRANCH_LINE" ]] || [[ "* ${BRANCH}" == "$BRANCH_LINE" ]]; then
+      EXISTS=1
+      break
+    fi
+  done < <(git --no-pager branch)
+  
+  if [[ "$EXISTS" != "1" ]]; then
     echo "branch '$BRANCH' does not exist"
     return
   fi
