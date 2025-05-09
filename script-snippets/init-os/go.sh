@@ -1,10 +1,15 @@
-#!/bin/bash
+VER=$1
+ARCH=$2
+SHOW_URL_ONLY=$3
 
-export GOLANG_VERSION=1.21.4
+if [[ -z "$VER" ]]; then
+    VER=1.24.2
+fi
+
+export GOLANG_VERSION=$VER
 export PATH=/usr/local/go/bin:$PATH
 
 set -eux
-ARCH="$(arch)"
 url=
 case "$ARCH" in
 'amd64')
@@ -40,7 +45,12 @@ case "$ARCH" in
 esac
 
 if [[ ! -z "$url" ]]; then
-    wget -O go.tgz "$url" --progress=dot:giga
+    if [[ ! -z "$SHOW_URL_ONLY" ]]; then
+        echo $url
+        exit 0
+    fi
+
+    wget -O go.tgz "$url"
     sudo tar -C /usr/local -xzf go.tgz
     rm go.tgz
     go version
