@@ -13,7 +13,7 @@ DB_PWD=$(openssl rand -base64 12)
 BASE64_PWD=$(echo -n "$DB_PWD" | base64 -w 0 2>/dev/null || echo -n "$DB_PWD" | base64)
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-if [[ -z "$(helm list -n kuma-global --short | grep $POSTGRES_RELEASE_NAME)" ]]; then
+if [[ -z "$(helm list -n $GLOBAL_NS --short | grep $POSTGRES_RELEASE_NAME)" ]]; then
   echo "-> Installing PostgreSQL..."
   helm install $POSTGRES_RELEASE_NAME oci://registry-1.docker.io/bitnamicharts/postgresql --version 16.0.3 \
     --namespace $GLOBAL_NS --create-namespace \
