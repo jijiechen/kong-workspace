@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-set -x
+# set -x
 
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
@@ -12,6 +12,7 @@ KUMA_DIR=
 PROJECT_DIR=
 GOLANG_VERSION=
 ARCH=
+UPGRADED_RS_REVISION=
 
 function get_kuma_dir(){
     REPO_ORG=
@@ -44,6 +45,7 @@ function prepare_global_vars(){
         exit 1
     fi
     IMAGE=$(kubectl get pods $CP_POD -n "${PRODUCT_NAME}-system" -o 'jsonpath={.spec.containers[0].image}')
+    IMAGE=${IMAGE%-debug}
     PRODUCT_VERSION=$(echo "$IMAGE" | cut -d ':' -f 2)
 
     pushd $(pwd)
@@ -63,6 +65,7 @@ function prepare_dlv(){
     fi
 
     echo "trying to download dlv using Kuma base image..."
+    docker rm -f dlv-builder-${ARCH}
     pushd $(pwd)
     cd $PROJECT_DIR
     git fetch --tags
@@ -117,17 +120,36 @@ BEGIN { in_ldflags_block=0 }
 ' mk/build.mk > mk/build2.mk
     mv mk/build2.mk mk/build.mk
     rm -rf ./build/artifacts-linux-$ARCH
-    docker rmi $PRODUCT_IMAGE_ORG/kuma-cp:${PRODUCT_VERSION}
+    docker rmi --force $PRODUCT_IMAGE_ORG/kuma-cp:${PRODUCT_VERSION}
     EXTRA_GOENV='GOEXPERIMENT=boringcrypto' ENABLED_GOOSES=linux ENABLED_GOARCHES=$ARCH make images
+    make docker/tag
     docker tag $PRODUCT_IMAGE_ORG/kuma-cp:${PRODUCT_VERSION} $PRODUCT_IMAGE_ORG/kuma-cp:${PRODUCT_VERSION}-debug
-    # todo: load image into the cluster
+    
     git checkout .
     popd
+
+    for CLUSTER_NAME in $(k3d cluster list --no-headers -o json | jq -r '.[].name'); do
+        load_image ${CLUSTER_NAME} "$PRODUCT_IMAGE_ORG/kuma-cp:${PRODUCT_VERSION}-debug"
+    done
 }
 
 function append_file(){
     echo -n "$2" >> $1
 }
+
+function load_image(){
+    K3D_CLUSTER_NAME=$1
+    IMAGES=$2
+
+    for i in 1 2 3 4 5; do
+        if eval "k3d image import --mode=direct --cluster=${K3D_CLUSTER_NAME} ${IMAGES}" ; then
+            break
+        else
+            echo "Image import failed. Retrying..."; 
+        fi
+    done
+}
+
 
 function prepare_workload(){
     # disable HPA
@@ -143,8 +165,18 @@ function prepare_workload(){
     fi
 
     DEPLOY_JSON_FILE=$(mktemp)
-    kubectl scale deploy $DEPLOYMENT_NAME -n ${PRODUCT_NAME}-system --replicas=1
     kubectl get deploy $DEPLOYMENT_NAME -n ${PRODUCT_NAME}-system -o json > $DEPLOY_JSON_FILE
+
+    CURRENT_REVISION=$(jq -r '.metadata.annotations["deployment.kubernetes.io/revision"]' $DEPLOY_JSON_FILE)
+    echo
+    echo "******************"
+    echo "You may use this command to rollback the debugger setup:"
+    echo "    kubectl -n ${PRODUCT_NAME}-system rollout undo deployment/$DEPLOYMENT_NAME --to-revision=$CURRENT_REVISION"
+    echo "******************"
+    echo
+
+    UPGRADED_RS_REVISION=$((CURRENT_REVISION+1))
+    kubectl scale deploy $DEPLOYMENT_NAME -n ${PRODUCT_NAME}-system --replicas=1
     CONTAINER_JSON=$(jq -rc ".spec.template.spec.containers[0] //empty" $DEPLOY_JSON_FILE)
 
     EXISTING_COMMAND=$(echo $CONTAINER_JSON | jq -rc '.command //empty')
@@ -182,26 +214,33 @@ function prepare_workload(){
     append_file $PATCH_TMP_FILE ',{"op": "add", "path": "/spec/template/spec/containers/0/command", "value":["sleep", "infinity"]}'
 
     append_file $PATCH_TMP_FILE ']'
+    
+    # todo: resources?
     kubectl patch deploy $DEPLOYMENT_NAME -n ${PRODUCT_NAME}-system --type json --patch-file "$PATCH_TMP_FILE"
     
     kubectl rollout status deploy/$DEPLOYMENT_NAME -n ${PRODUCT_NAME}-system
     sleep 5
-    NEW_CP_POD=$(kubectl get pods -l "app=${PRODUCT_NAME}-control-plane" -n "${PRODUCT_NAME}-system" --no-headers | grep Running | head -n 1 | awk '{print $1}')
-    if [[ -z "$NEW_CP_POD" ]]; then
+}
+
+function start_processes(){
+    if [[ ! -z "$UPGRADED_RS_REVISION" ]]; then
+        NEW_POD_TEMPLATE_HASH=$(kubectl get replicaset -l "app=${PRODUCT_NAME}-control-plane" -n "${PRODUCT_NAME}-system" -o json | jq -r ".items[] | select( .metadata.annotations[\"deployment.kubernetes.io/revision\"] == \"${UPGRADED_RS_REVISION}\") | .metadata.labels[\"pod-template-hash\"]")
+        UPGRADED_CP_POD=$(kubectl get pods -l "app=${PRODUCT_NAME}-control-plane,pod-template-hash=$NEW_POD_TEMPLATE_HASH" -n "${PRODUCT_NAME}-system" --no-headers | grep Running | head -n 1 | awk '{print $1}')
+    else
+        UPGRADED_CP_POD=$(kubectl get pods -l "app=${PRODUCT_NAME}-control-plane" -n "${PRODUCT_NAME}-system" --no-headers | grep Running | head -n 1 | awk '{print $1}')
+    fi
+    if [[ -z "$UPGRADED_CP_POD" ]]; then
         echo "No control plane pod found in namespace '${PRODUCT_NAME}-system'"
         exit 1
     fi
 
-    kubectl -n "${PRODUCT_NAME}-system" exec -c control-plane $NEW_CP_POD -- mkdir -p /tmp/kuma-cp-debug/dlv
-    kubectl -n "${PRODUCT_NAME}-system" cp -c control-plane $SCRIPT_PATH/dlv/dlv-${GOLANG_VERSION}-${ARCH} $NEW_CP_POD:/tmp/kuma-cp-debug/dlv/dlv
-    kubectl -n "${PRODUCT_NAME}-system" cp -c control-plane $SCRIPT_PATH/dlv_config.yaml $NEW_CP_POD:/tmp/kuma-cp-debug/dlv/config.yaml
-}
+    kubectl -n "${PRODUCT_NAME}-system" exec -c control-plane $UPGRADED_CP_POD -- mkdir -p /tmp/kuma-cp-debug/dlv
+    kubectl -n "${PRODUCT_NAME}-system" cp -c control-plane $SCRIPT_PATH/dlv/dlv-${GOLANG_VERSION}-${ARCH} $UPGRADED_CP_POD:/tmp/kuma-cp-debug/dlv/dlv
+    kubectl -n "${PRODUCT_NAME}-system" cp -c control-plane $SCRIPT_PATH/dlv_config.yaml $UPGRADED_CP_POD:/tmp/kuma-cp-debug/dlv/config.yaml
 
-function start_processes(){
-    CP_POD=$(kubectl get pods -l "app=${PRODUCT_NAME}-control-plane" -n "${PRODUCT_NAME}-system" --no-headers | grep Running | head -n 1 | awk '{print $1}')
-
-    kubectl -n "${PRODUCT_NAME}-system" exec -c control-plane $CP_POD  -- sh -c 'cd /tmp/kuma-cp-debug ; XDG_CONFIG_HOME=/tmp/kuma-cp-debug/ /tmp/kuma-cp-debug/dlv/dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient --log exec kuma-cp -- run --log-level=info --log-output-path= --config-file=/etc/kuma.io/kuma-control-plane/config.yaml &'
-    kubectl -n "${PRODUCT_NAME}-system" port-forward pods/$CP_POD 2345:2345
+    LOCAL_DBG_PORT=$(next_available_port 2345)
+    kubectl -n "${PRODUCT_NAME}-system" port-forward pods/$UPGRADED_CP_POD ${LOCAL_DBG_PORT}:2345 &
+    kubectl -n "${PRODUCT_NAME}-system" exec -it -c control-plane $UPGRADED_CP_POD  -- sh -c 'cd /tmp/kuma-cp-debug ; XDG_CONFIG_HOME=/tmp/kuma-cp-debug/ /tmp/kuma-cp-debug/dlv/dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient --log exec /usr/bin/kuma-cp -- run --log-level=info --log-output-path= --config-file=/etc/kuma.io/kuma-control-plane/config.yaml'
 }
 
 prepare_global_vars
@@ -210,3 +249,4 @@ build_project_with_debug_symbols
 # todo: debug the current source code (without checkout to a tag!)
 prepare_workload
 start_processes
+# todo: relaunch quickly?
