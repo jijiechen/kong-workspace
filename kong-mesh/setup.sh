@@ -117,7 +117,8 @@ ZONE_CONTEXTS=
 COLOR_RED='\033[1;31m'
 COLOR_GREEN='\033[1;32m'
 COLOR_YELLOW='\033[1;33m'
-COLOR_NONE='\033[0m' # No Color
+COLOR_NONE='\033[0m' # no color
+NL="${COLOR_NONE}\n" # line break
 
 if [ "$CLOUD_PLATFORM" == "k3d" ]; then
   GLOBAL_CONTEXT="k3d-${USERNAME}-${USAGE}-1"
@@ -157,7 +158,7 @@ elif [ "$CLOUD_PLATFORM" == "azure" ]; then
     ZONE_CONTEXTS="zone1=az_${REGION_1}_${USERNAME}-${USAGE}-1,zone2=az_${REGION_1}_${USERNAME}-${USAGE}-2"
   fi
 else
-  echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
+  printf "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${NL}"
   exit 1
 fi
 
@@ -206,13 +207,13 @@ if [ "$CREATE_CLUSTER" == "1" ]; then
       $SCRIPT_PATH/cluster/az-create.sh --name ${USERNAME}-${USAGE}-2 --nodes $CLUSTER_NODES --region $REGION_2
     fi
   else
-    echo "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${COLOR_NONE}"
+    printf "${COLOR_RED}Unsupported cloud platform: ${CLOUD_PLATFORM}${NL}"
     exit 1
   fi
 
-  echo "${COLOR_GREEN}===========================${COLOR_NONE}"
-  echo "${COLOR_GREEN}Cluster installed complete.${COLOR_NONE}"
-  echo "${COLOR_GREEN}===========================${COLOR_NONE}"
+  printf "${COLOR_GREEN}===========================${NL}"
+  printf "${COLOR_GREEN}Cluster installed complete.${NL}"
+  printf "${COLOR_GREEN}===========================${NL}"
 fi
 
 
@@ -246,19 +247,19 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
           echo "Waiting for global control plane endpoint..." && sleep 2
           TIMES_TRIED=$((TIMES_TRIED+1))
           if [[ $TIMES_TRIED -ge $MAX_ALLOWED_TRIES ]]; then 
-              echo "${COLOR_RED}Timeout waiting for endpoint IP of the global control plane.${COLOR_NONE}"
+              printf "${COLOR_RED}Timeout waiting for endpoint IP of the global control plane.${NL}"
               exit 1
           fi
       done
 
       EXTERNAL_IP=$(kubectl --namespace $GLOBAL_NS  get service/${PRODUCT_NAME}-global-zone-sync  -o jsonpath='{.status.loadBalancer.ingress[*].ip}')
       if [ -z "$EXTERNAL_IP" ]; then
-        echo "${COLOR_RED}Can not determine a public IP address for the sync endpoint from global control plane.${COLOR_NONE}"
+        printf "${COLOR_RED}Can not determine a public IP address for the sync endpoint from global control plane.${NL}"
         exit 1
       fi
 
       SYNC_ENDPOINT=${EXTERNAL_IP}:5685
-      echo "${COLOR_GREEN}Zone sync endpoint in global Control Plane is:${COLOR_NONE}"
+      printf "${COLOR_GREEN}Zone sync endpoint in global Control Plane is:${NL}"
       echo "$SYNC_ENDPOINT"
 
       echo ''
@@ -282,9 +283,9 @@ if [ "$INSTALL_CONTROL_PLANE" == "1" ]; then
     $SCRIPT_PATH/control-planes/zone/install.sh "$PRODUCT_NAME" "$PRODUCT_VERSION" "zone" "$ZONE_NS"
   fi
 
-  echo "${COLOR_GREEN}=================================${COLOR_NONE}"
-  echo "${COLOR_GREEN}Control planes installed complete.${COLOR_NONE}"
-  echo "${COLOR_GREEN}=================================${COLOR_NONE}"
+  printf "${COLOR_GREEN}=================================${NL}"
+  printf "${COLOR_GREEN}Control planes installed complete.${NL}"
+  printf "${COLOR_GREEN}=================================${NL}"
 fi
 
 
