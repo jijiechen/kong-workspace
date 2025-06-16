@@ -1,13 +1,17 @@
 #!/bin/bash
 
-RUN_MODE=all-in-one
+
+RUN_MODE=${RUN_MODE:-all-in-one}
+SERVICE_NAME=${SERVICE_NAME:-echo-server}
+SERVICE_PORT=${SERVICE_PORT:-10011}
+SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
+
 WORKING_DIR=/tmp/${RANDOM}
 mkdir -p ${WORKING_DIR}
 
-/kuma/run-app.sh &
+SERVICE_NAME=${SERVICE_NAME} SERVICE_PORT=${SERVICE_PORT} SERVICE_PROTOCOL=${SERVICE_PROTOCOL} RUN_MODE=${RUN_MODE} /kuma/run-app.sh &
+SERVICE_NAME=${SERVICE_NAME} SERVICE_PORT=${SERVICE_PORT} SERVICE_PROTOCOL=${SERVICE_PROTOCOL} RUN_MODE=${RUN_MODE} WORKING_DIR=${WORKING_DIR} /kuma/run-dp.sh &
 WORKING_DIR=${WORKING_DIR} RUN_MODE=${RUN_MODE} /kuma/run-cp.sh &
-WORKING_DIR=${WORKING_DIR} RUN_MODE=${RUN_MODE} /kuma/run-dp.sh &
-# todo: start the app on port
 
 function exit_all {
     kill -15 $(jobs -p) > /dev/null 2>&1 || true
@@ -15,5 +19,4 @@ function exit_all {
 
 trap exit_all EXIT INT QUIT TERM
 
-
-cat
+sleep infinity

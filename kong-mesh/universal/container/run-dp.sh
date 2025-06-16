@@ -1,8 +1,12 @@
 #!/bin/bash
 
-SERVICE_NAME=echo-server
-SERVICE_PORT=10011
-SERVICE_PROTOCOL=http
+if [[ "${RUN_MODE}" == "cp-only" ]]; then
+    exit 0
+fi
+
+SERVICE_NAME=${SERVICE_NAME:-echo-server}
+SERVICE_PORT=${SERVICE_PORT:-10011}
+SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
 
 CP_ADDRESS=127.0.0.1
 PUBLIC_IP_ADDR=$(hostname -i)
@@ -52,6 +56,8 @@ EOF
 # 5680: diagnostics
 # 5681: http-api-server
 # 5682: https-api-server
+
+# this container needs to be run with --privileged or --caps NET_ADMIN,NET_RAW
 kumactl install transparent-proxy --exclude-inbound-ports 5443,5676,5678,5680,5681,5682
 
 runuser -u kuma-dp -- /usr/local/bin/kuma-dp run --transparent-proxy \

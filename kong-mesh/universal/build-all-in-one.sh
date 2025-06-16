@@ -42,8 +42,7 @@ if [[ "$PRODUCT_NAME" == "kong-mesh" ]]; then
 fi
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-# WORKING_DIR=$(mktemp -d)
-WORKING_DIR=$(realpath ./build)
+WORKING_DIR=$(mktemp -d)
 echo "WORKING_DIR: $WORKING_DIR"
 
 pushd $(pwd)
@@ -52,7 +51,7 @@ mkdir -p container
 cp ${SCRIPT_PATH}/container/* ${WORKING_DIR}/container/
 
 curl -L -o kuma-source.zip https://github.com/kumahq/kuma/archive/refs/tags/${PRODUCT_VERSION}.zip && unzip kuma-source.zip && rm kuma-source.zip
-(cd kuma-${PRODUCT_VERSION} && GOOS=linux GOARCH=amd64 go build -o testserver test/server/main.go)
+(cd kuma-${PRODUCT_VERSION} && go build -o testserver test/server/main.go)
 
 curl -L ${INSTALLER_URL} | VERSION=${PRODUCT_VERSION} OS=linux sh -
 PRODUCT_DIR="${PRODUCT_NAME}-${PRODUCT_VERSION}"
@@ -70,7 +69,10 @@ RUN apt update \
   && apt clean \
   && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -u 5678 -U kuma-dp
+# Create the kuma-dp user and make Envoy able to write to stdout when running with a non-root user
+# https://github.com/moby/moby/issues/31243#issuecomment-406879017
+# this container needs to be run with a tty (-t)
+RUN useradd -u 5678 -U kuma-dp && usermod -a -G tty kuma-dp
 RUN mkdir /kuma && \
     echo "# use this file to override default configuration of kuma-cp" > /kuma/kuma-cp.conf && chmod a+rw /kuma/kuma-cp.conf
 ADD ${PRODUCT_DIR}/bin/ /usr/local/bin/
