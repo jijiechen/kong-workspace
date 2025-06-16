@@ -9,3 +9,4 @@ fi
 
 KUMA_GENERAL_WORK_DIR=${WORKING_DIR} kuma-cp run --log-level info --config-file /kuma/kuma-cp.conf
 
+# todo: only listen on localhost for all-in-one-mode

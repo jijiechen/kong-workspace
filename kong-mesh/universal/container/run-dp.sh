@@ -45,7 +45,16 @@ networking:
     port: 9901
 EOF
 
-/usr/local/bin/kuma-dp run --transparent-proxy \
+
+# 5443: admission-server
+# 5676: mads
+# 5678: dp-server (xds)
+# 5680: diagnostics
+# 5681: http-api-server
+# 5682: https-api-server
+kumactl install transparent-proxy --exclude-inbound-ports 5443,5676,5678,5680,5681,5682
+
+runuser -u kuma-dp -- /usr/local/bin/kuma-dp run --transparent-proxy \
   --cp-address=https://${CP_ADDRESS}:5678 \
   --dataplane-token-file=${WORKING_DIR}/dataplane-token \
   --dataplane-file=${WORKING_DIR}/dataplane.yaml
