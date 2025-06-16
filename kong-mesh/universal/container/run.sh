@@ -4,6 +4,7 @@ RUN_MODE=all-in-one
 WORKING_DIR=/tmp/${RANDOM}
 mkdir -p ${WORKING_DIR}
 
+/kuma/run-app.sh &
 WORKING_DIR=${WORKING_DIR} RUN_MODE=${RUN_MODE} /kuma/run-cp.sh &
 WORKING_DIR=${WORKING_DIR} RUN_MODE=${RUN_MODE} /kuma/run-dp.sh &
 # todo: start the app on port
