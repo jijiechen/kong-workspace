@@ -4,9 +4,9 @@ if [[ "${RUN_MODE}" == "cp-only" ]]; then
     exit 0
 fi
 
-SERVICE_NAME=${SERVICE_NAME:-echo-server}
-SERVICE_PORT=${SERVICE_PORT:-10011}
-SERVICE_PROTOCOL=${SERVICE_PROTOCOL:-http}
+APP_NAME=${APP_NAME:-echo-server}
+APP_PORT=${APP_PORT:-10011}
+APP_PROTOCOL=${APP_PROTOCOL:-http}
 
 CP_ADDRESS=127.0.0.1
 PUBLIC_IP_ADDR=$(hostname -i)
@@ -24,7 +24,7 @@ if [[ "${RUN_MODE}" == "all-in-one" ]]; then
   sleep 3
 
   kumactl config control-planes add --name cp --address http://${CP_ADDRESS}:5681 --config-file ${WORKING_DIR}/kumactl.config
-  kumactl generate dataplane-token --tag "kuma.io/service=${SERVICE_NAME}" --valid-for=87840h --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
+  kumactl generate dataplane-token --tag "kuma.io/service=${APP_NAME}" --valid-for=87840h --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
 elif [[ "${RUN_MODE}" == "dp-only" ]]; then
     # todo: skip tls verify?
     # todo: check the token
@@ -35,16 +35,16 @@ fi
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: Dataplane
 mesh: default
-name: ${SERVICE_NAME}
+name: ${APP_NAME}
 networking: 
   address: ${PUBLIC_IP_ADDR}
   inbound: 
-    - port: ${SERVICE_PORT}
-      servicePort: ${SERVICE_PORT}
+    - port: ${APP_PORT}
+      servicePort: ${APP_PORT}
       serviceAddress: 127.0.0.1
       tags: 
-        kuma.io/service: ${SERVICE_NAME}
-        kuma.io/protocol: ${SERVICE_PROTOCOL}
+        kuma.io/service: ${APP_NAME}
+        kuma.io/protocol: ${APP_PROTOCOL}
   admin:
     port: 9901
 EOF

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# RUN_MODE: all-in-one/dp-only/cp-only
-
 if [[ "${RUN_MODE}" == "dp-only" ]]; then
     exit 0
 fi
