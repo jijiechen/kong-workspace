@@ -5,11 +5,7 @@ if [[ "${DEBUG}" == "true" ]]; then
     set -x
 fi
 
-if [[ "${RUN_MODE}" == "cp-only" ]]; then
-    exit 0
-fi
-
-if [[ "${DP_MODE}" != "sidecar" ]]; then
+if [[ "${RUN_MODE}" != "all" ]] && [[ "${RUN_MODE}" != "sidecar" ]]; then
   exit 0
 fi
 

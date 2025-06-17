@@ -3,7 +3,7 @@
 if [[ "${DEBUG}" == "true" ]]; then
     set -x
 fi
-if [[ "${RUN_MODE}" == "dp-only" ]]; then
+if [[ "${RUN_MODE}" != "all" ]] && [[ "${RUN_MODE}" != "cp" ]]; then
     exit 0
 fi
 

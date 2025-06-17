@@ -3,11 +3,10 @@
 if [[ "${DEBUG}" == "true" ]]; then
     set -x
 fi
-if [[ "${RUN_MODE}" == "cp-only" ]]; then
+if [[ "${RUN_MODE}" == "cp" ]]; then
     exit 0
 fi
 
-DP_MODE=${DP_MODE:-sidecar}
 APP_NAME=${APP_NAME:-echo-server}
 CP_HOST=${CP_HOST:-127.0.0.1} # x.y.z.w
 # CP_TOKEN
@@ -23,18 +22,18 @@ if [[ "${WORKING_DIR}" == "" ]]; then
 fi
 
 function generate_token(){
-  if [[ "${DP_MODE}" == "sidecar" ]] || [[ "${DP_MODE}" == "gateway" ]]; then
+  if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "sidecar" ]] || [[ "${RUN_MODE}" == "gateway" ]]; then
     kumactl generate dataplane-token --tag "kuma.io/service=${APP_NAME}" --valid-for=87840h --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
-  elif [[ "${DP_MODE}" == "zone-ingress" ]]; then
+  elif [[ "${RUN_MODE}" == "ingress" ]]; then
     kumactl generate zone-token --valid-for=87840h --scope ingress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
-  elif [[ "${DP_MODE}" == "zone-egress" ]]; then
+  elif [[ "${RUN_MODE}" == "egress" ]]; then
     kumactl generate zone-token --zone default --valid-for=87840h --scope egress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
   fi
 }
 
 
 function generate_dataplane_file(){
-  if [[ "${DP_MODE}" == "gateway" ]]; then
+  if [[ "${RUN_MODE}" == "gateway" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: Dataplane
 mesh: default
@@ -48,7 +47,7 @@ networking:
   admin:
     port: 9901
 EOF
-  elif [[ "${DP_MODE}" == "zone-ingress" ]]; then
+  elif [[ "${RUN_MODE}" == "ingress" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: ZoneIngress
 name: ${APP_NAME}
@@ -60,7 +59,7 @@ networking:
   admin:
     port: 9901
 EOF
-  elif [[ "${DP_MODE}" == "zone-egress" ]]; then
+  elif [[ "${RUN_MODE}" == "egress" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: ZoneEgress
 name: ${APP_NAME}
@@ -91,11 +90,11 @@ EOF
 }
 
 function get_proxy_type() {
-  if [[ "${DP_MODE}" == "gateway" ]]; then
+  if [[ "${RUN_MODE}" == "gateway" ]]; then
     echo "dataplane"
-  elif [[ "${DP_MODE}" == "zone-ingress" ]]; then
+  elif [[ "${RUN_MODE}" == "ingress" ]]; then
     echo "ingress"
-  elif [[ "${DP_MODE}" == "zone-egress" ]]; then
+  elif [[ "${RUN_MODE}" == "egress" ]]; then
     echo "egress"
   else
     echo "dataplane"
@@ -108,10 +107,10 @@ until curl --connect-timeout 1  -s -o /dev/null -k --fail https://${CP_HOST}:568
   sleep 1
 done
 
-if [[ "${RUN_MODE}" == "all-in-one" ]]; then
+if [[ "${RUN_MODE}" == "all" ]]; then
   sleep 3
   kumactl config control-planes add --name cp --address http://127.0.0.1:5681 --config-file ${WORKING_DIR}/kumactl.config
-elif [[ "${RUN_MODE}" == "dp-only" ]]; then
+else
   if [[ "${CP_TOKEN}" == "" ]]; then
     >&2 printf "Please specify CP_TOKEN environment variable\n"
     exit 1
@@ -127,7 +126,7 @@ generate_dataplane_file
 DP_ARGS=''
 PROXY_TYPE=$(get_proxy_type)
 
-if [[ "${DP_MODE}" == "sidecar" ]]; then
+if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "sidecar" ]]; then
   DP_ARGS='--transparent-proxy'
 
   # 5443: admission-server
