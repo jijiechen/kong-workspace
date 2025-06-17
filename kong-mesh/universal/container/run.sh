@@ -1,7 +1,13 @@
 #!/bin/bash
 
+if [[ "${DEBUG}" == "true" ]]; then
+  set -x
+fi
+
 # RUN_MODE: all-in-one/dp-only/cp-only
 RUN_MODE=${RUN_MODE:-all-in-one}
+# DP_MODE: sidecar/gateway/zone-ingress/zone-egress
+DP_MODE=${DP_MODE:-sidecar}
 APP_CMD=${APP_CMD:-/kuma/run-app.sh}
 APP_NAME=${APP_NAME:-echo-server}
 APP_PORT=${APP_PORT:-10011}
@@ -13,8 +19,21 @@ mkdir -p ${WORKING_DIR}
 if [[ "${APP_CMD}" != "none" ]]; then
   APP_NAME=${APP_NAME} APP_PORT=${APP_PORT} APP_PROTOCOL=${APP_PROTOCOL} RUN_MODE=${RUN_MODE} ${APP_CMD} &
 fi
-APP_NAME=${APP_NAME} APP_PORT=${APP_PORT} APP_PROTOCOL=${APP_PROTOCOL} RUN_MODE=${RUN_MODE} WORKING_DIR=${WORKING_DIR} /kuma/run-dp.sh &
+DP_MODE=${DP_MODE} APP_NAME=${APP_NAME} APP_PORT=${APP_PORT} APP_PROTOCOL=${APP_PROTOCOL} RUN_MODE=${RUN_MODE} WORKING_DIR=${WORKING_DIR} /kuma/run-dp.sh &
 WORKING_DIR=${WORKING_DIR} RUN_MODE=${RUN_MODE} /kuma/run-cp.sh &
+
+if [[ "${RUN_MODE}" == "cp-only" ]]; then
+  until curl --connect-timeout 1  -s -o /dev/null -k --fail https://127.0.0.1:5682/global-secrets/admin-user-token; do
+    echo 'waiting for readiness of kuma-cp...'
+    sleep 1
+  done
+
+  sleep 1
+  echo "===== CP_TOKEN ====="
+  curl -s -o - -k --fail https://127.0.0.1:5682/global-secrets/admin-user-token | grep data | cut -d '"' -f 4 | base64 -d
+  echo ""
+fi
+
 
 function exit_all {
     kill -15 $(jobs -p) > /dev/null 2>&1 || true

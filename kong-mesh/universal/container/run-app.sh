@@ -1,7 +1,16 @@
 #!/bin/bash
 
+
+if [[ "${DEBUG}" == "true" ]]; then
+    set -x
+fi
+
 if [[ "${RUN_MODE}" == "cp-only" ]]; then
     exit 0
+fi
+
+if [[ "${DP_MODE}" != "sidecar" ]]; then
+  exit 0
 fi
 
 APP_NAME=${APP_NAME:-echo-server}

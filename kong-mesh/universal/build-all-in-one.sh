@@ -42,7 +42,8 @@ if [[ "$PRODUCT_NAME" == "kong-mesh" ]]; then
 fi
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-WORKING_DIR=$(mktemp -d)
+# WORKING_DIR=$(mktemp -d)
+WORKING_DIR=$(realpath ./build)
 echo "WORKING_DIR: $WORKING_DIR"
 
 pushd $(pwd)
@@ -50,10 +51,10 @@ cd ${WORKING_DIR}
 mkdir -p container
 cp ${SCRIPT_PATH}/container/* ${WORKING_DIR}/container/
 
-curl -L -o kuma-source.zip https://github.com/kumahq/kuma/archive/refs/tags/${PRODUCT_VERSION}.zip && unzip kuma-source.zip && rm kuma-source.zip
-(cd kuma-${PRODUCT_VERSION} && go build -o testserver test/server/main.go)
+# curl -L -o kuma-source.zip https://github.com/kumahq/kuma/archive/refs/tags/${PRODUCT_VERSION}.zip && unzip kuma-source.zip && rm kuma-source.zip
+# (cd kuma-${PRODUCT_VERSION} && go build -o testserver test/server/main.go)
 
-curl -L ${INSTALLER_URL} | VERSION=${PRODUCT_VERSION} OS=linux sh -
+# curl -L ${INSTALLER_URL} | VERSION=${PRODUCT_VERSION} OS=linux sh -
 PRODUCT_DIR="${PRODUCT_NAME}-${PRODUCT_VERSION}"
 
 cat << EOF > ./Dockerfile
