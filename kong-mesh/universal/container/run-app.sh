@@ -5,7 +5,7 @@ if [[ "${DEBUG}" == "true" ]]; then
     set -x
 fi
 
-if [[ "${RUN_MODE}" != "all" ]] && [[ "${RUN_MODE}" != "sidecar" ]]; then
+if [[ "${RUN_MODE}" != "all" ]] && [[ "${RUN_MODE}" != "app" ]]; then
   exit 0
 fi
 

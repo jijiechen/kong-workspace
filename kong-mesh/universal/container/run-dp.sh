@@ -22,7 +22,7 @@ if [[ "${WORKING_DIR}" == "" ]]; then
 fi
 
 function generate_token(){
-  if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "sidecar" ]] || [[ "${RUN_MODE}" == "gateway" ]]; then
+  if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "app" ]] || [[ "${RUN_MODE}" == "gateway" ]]; then
     kumactl generate dataplane-token --tag "kuma.io/service=${APP_NAME}" --valid-for=87840h --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
   elif [[ "${RUN_MODE}" == "ingress" ]]; then
     kumactl generate zone-token --valid-for=87840h --scope ingress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
@@ -126,7 +126,7 @@ generate_dataplane_file
 DP_ARGS=''
 PROXY_TYPE=$(get_proxy_type)
 
-if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "sidecar" ]]; then
+if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "app" ]]; then
   DP_ARGS='--transparent-proxy'
 
   # 5443: admission-server

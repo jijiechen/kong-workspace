@@ -4,12 +4,21 @@ if [[ "${DEBUG}" == "true" ]]; then
   set -x
 fi
 
-# RUN_MODE: all/cp/sidecar/gateway/egress/ingress
+# RUN_MODE: all/cp/app/gateway/egress/ingress
 RUN_MODE=${RUN_MODE:-all}
 APP_CMD=${APP_CMD:-/kuma/run-app.sh}
-APP_NAME=${APP_NAME:-echo-server}
+
 APP_PORT=${APP_PORT:-10011}
 APP_PROTOCOL=${APP_PROTOCOL:-http}
+APP_NAME=${APP_NAME}
+
+if [[ "${APP_NAME}" == "" ]]; then
+  if [[ "${RUN_MODE}" == "all" ]]; then
+    APP_NAME=echo-server
+  else
+    APP_NAME="${RUN_MODE}-$(uname -n)"
+  fi
+fi
 
 WORKING_DIR=/tmp/${RANDOM}
 mkdir -p ${WORKING_DIR}
