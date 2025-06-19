@@ -25,7 +25,7 @@ function generate_token(){
   if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "app" ]] || [[ "${RUN_MODE}" == "gateway" ]]; then
     kumactl generate dataplane-token --tag "kuma.io/service=${APP_NAME}" --valid-for=87840h --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
   elif [[ "${RUN_MODE}" == "ingress" ]]; then
-    kumactl generate zone-token --valid-for=87840h --scope ingress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
+    kumactl generate zone-token -zone default --valid-for=87840h --scope ingress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
   elif [[ "${RUN_MODE}" == "egress" ]]; then
     kumactl generate zone-token --zone default --valid-for=87840h --scope egress --config-file ${WORKING_DIR}/kumactl.config > ${WORKING_DIR}/dataplane-token
   fi
@@ -33,11 +33,12 @@ function generate_token(){
 
 
 function generate_dataplane_file(){
+  INSTANCE_ID=$(uname -n)
   if [[ "${RUN_MODE}" == "gateway" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: Dataplane
 mesh: default
-name: ${APP_NAME}
+name: ${INSTANCE_ID}
 networking:
   address: ${PUBLIC_IP_ADDR}
   gateway:
@@ -50,7 +51,7 @@ EOF
   elif [[ "${RUN_MODE}" == "ingress" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: ZoneIngress
-name: ${APP_NAME}
+name: ${INSTANCE_ID}
 networking:
   address: ${PUBLIC_IP_ADDR}
   port: 10001
@@ -62,7 +63,7 @@ EOF
   elif [[ "${RUN_MODE}" == "egress" ]]; then
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: ZoneEgress
-name: ${APP_NAME}
+name: ${INSTANCE_ID}
 networking:
   address: ${PUBLIC_IP_ADDR}
   port: 10002
@@ -73,7 +74,7 @@ EOF
 cat << EOF > ${WORKING_DIR}/dataplane.yaml
 type: Dataplane
 mesh: default
-name: ${APP_NAME}
+name: ${INSTANCE_ID}
 networking: 
   address: ${PUBLIC_IP_ADDR}
   inbound: 

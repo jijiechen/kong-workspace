@@ -12,6 +12,19 @@ APP_PORT=${APP_PORT:-10011}
 APP_PROTOCOL=${APP_PROTOCOL:-http}
 APP_NAME=${APP_NAME}
 
+HAS_TTY=$(tty >/dev/null 2>&1 && echo "true" || echo "false")
+if [[ "${RUN_MODE}" != "cp" ]] && [[ "${HAS_TTY}" == "false" ]]; then
+  echo 'Please allocate a pseudo-TTY for the container so that Envoy can write to /dev/stdout'
+  echo 'You can do this by adding a -t, or --tty when running the container'
+  exit 1
+fi
+if [[ "${RUN_MODE}" == "all" ]] || [[ "${RUN_MODE}" == "app" ]]; then
+  if [[ ! -e /dev/kmsg ]] ; then
+    echo 'Please run the container with --privileged enabled so that we can setup the transparent proxy'
+    exit 1
+  fi
+fi
+
 if [[ "${APP_NAME}" == "" ]]; then
   if [[ "${RUN_MODE}" == "all" ]]; then
     APP_NAME=echo-server

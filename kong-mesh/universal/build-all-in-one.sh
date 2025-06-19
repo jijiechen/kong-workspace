@@ -42,7 +42,8 @@ if [[ "$PRODUCT_NAME" == "kong-mesh" ]]; then
 fi
 
 SCRIPT_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-WORKING_DIR=$(mktemp -d)
+# WORKING_DIR=$(mktemp -d)
+WORKING_DIR=$(realpath ./build)
 echo "WORKING_DIR: $WORKING_DIR"
 
 pushd $(pwd)
