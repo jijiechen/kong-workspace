@@ -202,6 +202,25 @@ function next_available_port(){
   echo $PORT
 }
 
+KUMA_KM_VERSION=2.11.0
+function use_kuma(){
+  if [[ ! -d "$HOME/kuma-${KUMA_KM_VERSION}" ]]; then
+    curl -L https://kuma.io/installer.sh | VERSION=${KUMA_KM_VERSION} sh -
+  fi
+
+  PATH=$(echo $PATH | tr ":" "\n" | grep -v "$HOME/kong-mesh" | tr "\n" ":")
+  export PATH=${PATH}:$HOME/kuma-${KUMA_KM_VERSION}/bin
+}
+
+function use_km(){
+  if [[ ! -d "$HOME/kuma-${KUMA_KM_VERSION}" ]]; then
+    curl -L https://docs.konghq.com/mesh/installer.sh | VERSION=${KUMA_KM_VERSION} sh -
+  fi
+
+  PATH=$(echo $PATH | tr ":" "\n" | grep -v "$HOME/kuma" |  tr "\n" ":")
+  export PATH=${PATH}:$HOME/kong-mesh-${KUMA_KM_VERSION}/bin
+}
+
 function kmesh_license_add(){
   if [[ -z "$KMESH_LICENSE" ]]; then
     echo "Please specify license file path as env variable 'KMESH_LICENSE'"
@@ -257,7 +276,8 @@ alias preview-release="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mes
 alias clera='clear'
 alias pdos='pods'
 
-export PATH=$HOME/go/bin:$HOME/.cargo/bin:$HOME/kong-mesh-2.8.1/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
+export PATH=$HOME/go/bin:$HOME/.cargo/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
+use_kuma
 if type crcd >/dev/null 2>&1 ; then
   eval $(crc oc-env)
 fi
