@@ -6,6 +6,13 @@ CONTAINER_APP=kuma-app-sidecar
 CONTAINER_GATEWAY=kuma-gateway
 CONTAINER_EGRESS=kuma-egress
 
+COLOR_RED='\033[1;31m'
+COLOR_GREEN='\033[1;32m'
+COLOR_YELLOW='\033[1;33m'
+COLOR_NONE='\033[0m' # no color
+NL="${COLOR_NONE}\n" # line break
+
+
 docker rm -f ${CONTAINER_CP} ${CONTAINER_APP} ${CONTAINER_GATEWAY} ${CONTAINER_EGRESS}
 
 docker run -t -d --name ${CONTAINER_CP} --rm -e RUN_MODE=cp kuma-all-in-one:2.11.0
@@ -19,6 +26,7 @@ docker run -t -d --rm --name ${CONTAINER_APP} --privileged -e RUN_MODE=app -e CP
 docker run -t -d --rm --name ${CONTAINER_GATEWAY} -e RUN_MODE=gateway -e CP_HOST=${CP_HOST} -e "CP_TOKEN=$CP_TOKEN" kuma-all-in-one:2.11.0
 docker run -t -d --rm  --name ${CONTAINER_EGRESS} -e RUN_MODE=egress  -e CP_HOST=${CP_HOST} -e "CP_TOKEN=$CP_TOKEN"  kuma-all-in-one:2.11.0
 
+GW_HOST=$(docker inspect ${CONTAINER_GATEWAY} | jq -r '.[0].NetworkSettings.IPAddress')
 
 SERVICE_NAME_APP=$(docker exec ${CONTAINER_APP} /bin/bash -c 'echo ${RUN_MODE}-$(uname -n)')
 SERVICE_NAME_GATEWAY=$(docker exec ${CONTAINER_GATEWAY} /bin/bash -c 'echo ${RUN_MODE}-$(uname -n)')
@@ -164,4 +172,13 @@ spec:
           path: "/dev/stdout"
 EOF
 
+printf "${COLOR_GREEN}=================================${NL}"
+printf "${COLOR_GREEN}Universal mesh setup complete.${NL}"
+printf "${COLOR_GREEN}=================================${NL}"
+
 kumactl get meshes  --config-file ./kumactl.config
+
+echo ""
+echo "CP: http://${CP_HOST}:5681/gui"
+echo "testserver: http://${GW_HOST}:8080"
+echo "httpbin: http://${GW_HOST}:8081"
