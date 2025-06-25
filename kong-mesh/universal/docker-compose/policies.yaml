@@ -1,0 +1,137 @@
+name: default
+type: Mesh
+mtls:
+  backends:
+  - name: ca-1
+    type: builtin
+  enabledBackend: ca-1
+routing:
+  zoneEgress: true
+meshServices:
+  mode: Exclusive
+---
+
+type: MeshTrafficPermission
+name: allow-all
+mesh: default
+spec:
+  targetRef:
+    kind: Mesh
+  from:
+  - targetRef:
+      kind: Mesh
+    default:
+      action: Allow
+
+---
+type: HostnameGenerator
+name: external-services
+mesh: default
+spec:
+  selector:
+    meshExternalService:
+      matchLabels:
+        kuma.io/origin: zone
+  template: "{{ .DisplayName }}.svc.external"
+
+---
+type: MeshExternalService
+name: mes-http
+mesh: default
+spec:
+  match:
+    type: HostnameGenerator
+    port: 80
+    protocol: http
+  endpoints:
+  - address: httpbin.org
+    port: 80
+---
+
+type: MeshGateway
+mesh: default
+name: edge-gateway
+selectors:
+  - match:
+      kuma.io/service: gateway
+conf:
+  listeners:
+    - port: 8080
+      protocol: HTTP
+      tags:
+        port: http-8080
+    - port: 8081
+      protocol: HTTP
+      tags:
+        port: http-8081
+
+---
+type: MeshHTTPRoute
+name: edge-gateway-8080-route
+mesh: default
+spec:
+  targetRef:
+    kind: MeshGateway
+    name: edge-gateway
+    tags:
+      port: http-8080
+  to:
+  - targetRef:
+      kind: Mesh
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: "/"
+      default:
+        backendRefs:
+        - kind: MeshService
+          name: app
+
+---
+type: MeshHTTPRoute
+name: edge-gateway-8081-route
+mesh: default
+spec:
+  targetRef:
+    kind: MeshGateway
+    name: edge-gateway
+    tags:
+      port: http-8081
+  to:
+  - targetRef:
+      kind: Mesh
+    rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: "/"
+      default:
+        backendRefs:
+        - kind: MeshExternalService
+          name: mes-http
+
+---
+type: MeshAccessLog
+name: all-incoming-traffic
+mesh: default
+spec:
+  rules:
+  - default:
+      backends:
+      - type: File
+        file:
+          path: "/dev/stdout"
+---
+type: MeshAccessLog
+name: all-outgoing-traffic
+mesh: default
+spec:
+  to:
+  - targetRef:
+      kind: Mesh
+    default:
+      backends:
+      - type: File
+        file:
+          path: "/dev/stdout"

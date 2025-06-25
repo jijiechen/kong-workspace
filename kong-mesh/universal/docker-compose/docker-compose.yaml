@@ -1,0 +1,148 @@
+
+services:
+  kuma-cp:
+    image: kumahq/kuma-cp:2.11.0
+    container_name: kuma-cp
+    hostname: kuma-cp
+    expose:
+    - "5682" # HTTPS API
+    - "5678" # XDS Server
+    ports:
+    - "5681" # HTTP API (published to host using a random port)
+    volumes:
+    - ./kuma-cp.conf:/kuma/kuma-cp.conf
+    command: ["run", "--config-file", "/kuma/kuma-cp.conf"]
+    networks:
+    - kuma-net
+    healthcheck:
+      test: ["CMD", "/busybox/sh", "-c", "wget -q -O - http://localhost:5681/global-secrets/admin-user-token || exit 1"]
+      interval: 1s
+      timeout: 1s
+      retries: 20
+
+  kuma-token-gen:
+    image: kumahq/kumactl:2.11.0
+    container_name: kuma-token-gen
+    user: root
+    depends_on:
+      kuma-cp:
+        condition: service_healthy
+    volumes:
+      - tokens:/tokens:rw
+      - ./policies.yaml:/kuma/policies.yaml
+    network_mode: "service:kuma-cp"
+    entrypoint: ["/busybox/sh", "-c"]
+    command: |
+      "echo \"generating tokens\"; \
+      kumactl config control-planes add --name cp --address http://127.0.0.1:5681 --config-file /tokens/kumactl.config; \
+      kumactl generate dataplane-token --config-file /tokens/kumactl.config --valid-for=87840h --tag kuma.io/service=app > /tokens/app.token; \
+      kumactl generate dataplane-token --config-file /tokens/kumactl.config --valid-for=87840h --tag kuma.io/service=gateway > /tokens/gateway.token; \
+      kumactl generate zone-token --config-file /tokens/kumactl.config --valid-for=87840h --zone default --scope egress > /tokens/egress.token; \
+      if [[ -f /kuma/policies.yaml ]]; then kumactl apply -f /kuma/policies.yaml; fi; \
+      rm /tokens/kumactl.config"
+
+  kuma-sidecar:
+    image: kumahq/kuma-dp:2.11.0
+    container_name: kuma-sidecar
+    depends_on:
+      kuma-token-gen:
+        condition: service_completed_successfully
+    user: "5678:5678"
+    environment:
+    - LOG_LEVEL=info
+    entrypoint: ["/busybox/sh", "-c"]
+    command: |
+      "set -e; \
+      PUBLIC_IP_ADDR=$(hostname -i); \
+      INSTANCE_ID=$(uname -n); \
+      printf \"type: Dataplane\\nmesh: default\\nname: app-$${INSTANCE_ID}\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  inbound:\\n  - port: 8080\\n    servicePort: 8080\\n    serviceAddress: 127.0.0.1\\n    tags:\\n      kuma.io/service: app\\n      kuma.io/protocol: http\\n  transparentProxying:\\n    redirectPortInbound: 15006\\n    redirectPortOutbound: 15001\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
+      cat /tmp/dp.yaml; \
+      kuma-dp run --proxy-type dataplane --cp-address=https://kuma-cp:5678 --dataplane-file=/tmp/dp.yaml --dataplane-token-file=/tokens/app.token --log-level $${LOG_LEVEL} --envoy-log-level $${LOG_LEVEL}"
+    volumes:
+      - tokens:/tokens
+    networks:
+    - kuma-net
+    expose:
+    - "8080"
+
+  kuma-init:
+    image: kumahq/kuma-init:2.11.0
+    container_name: kuma-init
+    depends_on:
+      kuma-sidecar:
+        condition: service_started
+    privileged: true
+    volumes:
+      - tokens:/tokens
+    network_mode: "service:kuma-sidecar"
+
+  kuma-app:
+    image: kong/httpbin:0.2.3
+    container_name: kuma-app
+    depends_on:
+      kuma-sidecar:
+        condition: service_started
+    entrypoint: 
+    - pipenv
+    - run
+    - gunicorn
+    - -b
+    - 127.0.0.1:8080
+    - httpbin:app
+    - -k
+    - gevent
+    network_mode: "service:kuma-sidecar"
+
+
+  kuma-gateway:
+    image: kumahq/kuma-dp:2.11.0
+    container_name: kuma-gateway
+    depends_on:
+      kuma-token-gen:
+        condition: service_completed_successfully
+    user: "5678:5678"
+    environment:
+    - LOG_LEVEL=info
+    entrypoint: ["/busybox/sh", "-c"]
+    command: |
+      "set -e; \
+      PUBLIC_IP_ADDR=$(hostname -i); \
+      INSTANCE_ID=$(uname -n); \
+      printf \"type: Dataplane\\nmesh: default\\nname: gateway-$${INSTANCE_ID}\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  gateway:\\n    type: BUILTIN\\n    tags:\\n      kuma.io/service: gateway\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
+      cat /tmp/dp.yaml; \
+      kuma-dp run --proxy-type dataplane --cp-address=https://kuma-cp:5678 --dataplane-file=/tmp/dp.yaml --dataplane-token-file=/tokens/gateway.token --log-level $${LOG_LEVEL} --envoy-log-level $${LOG_LEVEL}"
+    volumes:
+      - tokens:/tokens
+    networks:
+    - kuma-net
+    ports:
+      - "8080"
+      - "8081"
+
+  kuma-egress:
+    image: kumahq/kuma-dp:2.11.0
+    container_name: kuma-egress
+    depends_on:
+      kuma-token-gen:
+        condition: service_completed_successfully
+    user: "5678:5678"
+    environment:
+    - LOG_LEVEL=info
+    entrypoint: ["/busybox/sh", "-c"]
+    command: |
+      "set -e; \
+      PUBLIC_IP_ADDR=$(hostname -i); \
+      INSTANCE_ID=$(uname -n); \
+      printf \"type: ZoneEgress\\nname: egress-$${INSTANCE_ID}\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  port: 10002\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
+      cat /tmp/dp.yaml; \
+      kuma-dp run --proxy-type egress --cp-address=https://kuma-cp:5678 --dataplane-file=/tmp/dp.yaml --dataplane-token-file=/tokens/egress.token --log-level $${LOG_LEVEL} --envoy-log-level $${LOG_LEVEL}"
+    volumes:
+      - tokens:/tokens
+    networks:
+    - kuma-net
+
+volumes:
+  tokens: 
+networks:
+  kuma-net:
+    driver: bridge
