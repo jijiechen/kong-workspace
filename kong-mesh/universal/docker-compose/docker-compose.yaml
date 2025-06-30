@@ -1,8 +1,7 @@
 
 services:
   kuma-cp:
-    image: kumahq/kuma-cp:2.11.0
-    container_name: kuma-cp
+    image: ${PRODUCT_REGISTRY:-kumahq}/kuma-cp:${PRODUCT_VERSION:-2.11.0}
     hostname: kuma-cp
     expose:
     - "5682" # HTTPS API
@@ -20,9 +19,8 @@ services:
       timeout: 1s
       retries: 20
 
-  kuma-token-gen:
-    image: kumahq/kumactl:2.11.0
-    container_name: kuma-token-gen
+  kuma-cli:
+    image: ${PRODUCT_REGISTRY:-kumahq}/kumactl:${PRODUCT_VERSION:-2.11.0}
     user: root
     depends_on:
       kuma-cp:
@@ -41,15 +39,14 @@ services:
       if [[ -f /kuma/policies.yaml ]]; then kumactl apply -f /kuma/policies.yaml; fi; \
       rm /tokens/kumactl.config"
 
-  kuma-sidecar:
-    image: kumahq/kuma-dp:2.11.0
-    container_name: kuma-sidecar
+  kuma-app-sidecar:
+    image: ${PRODUCT_REGISTRY:-kumahq}/kuma-dp:${PRODUCT_VERSION:-2.11.0}
     depends_on:
-      kuma-token-gen:
+      kuma-cli:
         condition: service_completed_successfully
     user: "5678:5678"
     environment:
-    - LOG_LEVEL=info
+    - LOG_LEVEL=${LOG_LEVEL:-info}
     entrypoint: ["/busybox/sh", "-c"]
     command: |
       "set -e; \
@@ -64,23 +61,24 @@ services:
     - kuma-net
     expose:
     - "8080"
+    healthcheck:
+      test: ["CMD", "/busybox/sh", "-c", "wget -q -O - http://localhost:9901/ready && wget -q -O /dev/null http://localhost:8080/ || exit 1"]
+      interval: 1s
+      timeout: 1s
+      retries: 30
 
-  kuma-init:
-    image: kumahq/kuma-init:2.11.0
-    container_name: kuma-init
+  kuma-app-init:
+    image: ${PRODUCT_REGISTRY:-kumahq}/kuma-init:${PRODUCT_VERSION:-2.11.0}
     depends_on:
-      kuma-sidecar:
+      kuma-app-sidecar:
         condition: service_started
     privileged: true
-    volumes:
-      - tokens:/tokens
-    network_mode: "service:kuma-sidecar"
+    network_mode: "service:kuma-app-sidecar"
 
   kuma-app:
     image: kong/httpbin:0.2.3
-    container_name: kuma-app
     depends_on:
-      kuma-sidecar:
+      kuma-app-sidecar:
         condition: service_started
     entrypoint: 
     - pipenv
@@ -91,18 +89,17 @@ services:
     - httpbin:app
     - -k
     - gevent
-    network_mode: "service:kuma-sidecar"
+    network_mode: "service:kuma-app-sidecar"
 
 
   kuma-gateway:
-    image: kumahq/kuma-dp:2.11.0
-    container_name: kuma-gateway
+    image: ${PRODUCT_REGISTRY:-kumahq}/kuma-dp:${PRODUCT_VERSION:-2.11.0}
     depends_on:
-      kuma-token-gen:
+      kuma-cli:
         condition: service_completed_successfully
     user: "5678:5678"
     environment:
-    - LOG_LEVEL=info
+    - LOG_LEVEL=${LOG_LEVEL:-info}
     entrypoint: ["/busybox/sh", "-c"]
     command: |
       "set -e; \
@@ -120,14 +117,13 @@ services:
       - "8081"
 
   kuma-egress:
-    image: kumahq/kuma-dp:2.11.0
-    container_name: kuma-egress
+    image: ${PRODUCT_REGISTRY:-kumahq}/kuma-dp:${PRODUCT_VERSION:-2.11.0}
     depends_on:
-      kuma-token-gen:
+      kuma-cli:
         condition: service_completed_successfully
     user: "5678:5678"
     environment:
-    - LOG_LEVEL=info
+    - LOG_LEVEL=${LOG_LEVEL:-info}
     entrypoint: ["/busybox/sh", "-c"]
     command: |
       "set -e; \
