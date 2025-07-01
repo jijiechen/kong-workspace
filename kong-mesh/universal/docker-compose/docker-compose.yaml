@@ -52,7 +52,7 @@ services:
       "set -e; \
       PUBLIC_IP_ADDR=$(hostname -i); \
       INSTANCE_ID=$(uname -n); \
-      printf \"type: Dataplane\\nmesh: default\\nname: app-$${INSTANCE_ID}\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  inbound:\\n  - port: 8080\\n    servicePort: 8080\\n    serviceAddress: 127.0.0.1\\n    tags:\\n      kuma.io/service: app\\n      kuma.io/protocol: http\\n  transparentProxying:\\n    redirectPortInbound: 15006\\n    redirectPortOutbound: 15001\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
+      printf \"type: Dataplane\\nmesh: default\\nname: app-$${INSTANCE_ID}\\nlabels:\\n  service: app\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  inbound:\\n  - port: 8080\\n    servicePort: 8080\\n    serviceAddress: 127.0.0.1\\n    tags:\\n      kuma.io/service: app\\n      kuma.io/protocol: http\\n  transparentProxying:\\n    redirectPortInbound: 15006\\n    redirectPortOutbound: 15001\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
       cat /tmp/dp.yaml; \
       kuma-dp run --proxy-type dataplane --cp-address=https://kuma-cp:5678 --dataplane-file=/tmp/dp.yaml --dataplane-token-file=/tokens/app.token --log-level $${LOG_LEVEL} --envoy-log-level $${LOG_LEVEL}"
     volumes:
@@ -105,7 +105,7 @@ services:
       "set -e; \
       PUBLIC_IP_ADDR=$(hostname -i); \
       INSTANCE_ID=$(uname -n); \
-      printf \"type: Dataplane\\nmesh: default\\nname: gateway-$${INSTANCE_ID}\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  gateway:\\n    type: BUILTIN\\n    tags:\\n      kuma.io/service: gateway\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
+      printf \"type: Dataplane\\nmesh: default\\nname: gateway-$${INSTANCE_ID}\\nlabels:\\n  service: gateway\\nnetworking:\\n  address: $${PUBLIC_IP_ADDR}\\n  gateway:\\n    type: BUILTIN\\n    tags:\\n      kuma.io/service: gateway\\n  admin:\\n    port: 9901\" > /tmp/dp.yaml; \
       cat /tmp/dp.yaml; \
       kuma-dp run --proxy-type dataplane --cp-address=https://kuma-cp:5678 --dataplane-file=/tmp/dp.yaml --dataplane-token-file=/tokens/gateway.token --log-level $${LOG_LEVEL} --envoy-log-level $${LOG_LEVEL}"
     volumes:

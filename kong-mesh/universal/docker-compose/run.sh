@@ -53,3 +53,4 @@ echo "Cleanup: docker compose rm"
 
 # todo: show an overlay view of logs?
 # todo: terminate the whole stack when Ctrl+C
+# kumactl  config control-planes add --name universal --overwrite --address http://localhost:32874
