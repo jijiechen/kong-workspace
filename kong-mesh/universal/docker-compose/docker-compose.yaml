@@ -76,19 +76,16 @@ services:
     network_mode: "service:kuma-app-sidecar"
 
   kuma-app:
-    image: kong/httpbin:0.2.3
+    image: jijiechen/testserver:kuma-2.11.0
     depends_on:
       kuma-app-sidecar:
         condition: service_started
     entrypoint: 
-    - pipenv
-    - run
-    - gunicorn
-    - -b
-    - 127.0.0.1:8080
-    - httpbin:app
-    - -k
-    - gevent
+    - /usr/local/bin/testserver
+    - echo
+    - --port
+    - '8080'
+    - --probes
     network_mode: "service:kuma-app-sidecar"
 
 
