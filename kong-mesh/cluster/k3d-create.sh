@@ -33,7 +33,7 @@ done
 
 NETWORK=kuma-lan
 if [[ -z "$(docker network ls --format '{{ .Name }}' | grep $NETWORK)" ]]; then
-  docker network create -d=bridge -o com.docker.network.bridge.enable_ip_masquerade=true --ipv6 --subnet "fd00:abcd:1234::0/64" $NETWORK
+  docker network create -d=bridge -o com.docker.network.bridge.enable_ip_masquerade=true --ipv6 --subnet "fd00:abcd:1234::0/64" --subnet "172.20.0.0/16" --gateway 172.20.42.1 $NETWORK
 fi
 
 
