@@ -1,4 +1,5 @@
 .DS_Store
+.vscode/
 day/*
 release/*
 !day/.gitkeep
