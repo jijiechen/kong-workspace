@@ -261,10 +261,87 @@ function kuma_cp_port_forward(){
   kubectl -n $CP_NS port-forward svc/${PRODUCT}-control-plane $PORT:5681
 }
 
+function echo_server(){
+  TAG=$(docker images | grep 'kumahq/kuma-universal' | grep 'arm64' | head -n 1 | awk '{print $2}')
+  if [[ -z "$TAG" ]]; then
+    echo "No suitable kumahq/kuma-universal image is found."
+    echo "Please build kuma first."
+    exit 1
+  fi
+
+  RUNNING=$(docker ps | grep 'local-echoserver')
+  if [[ -z "$RUNNING" ]]; then
+    docker run -d  --rm  --name local-echoserver -p 16600:10011 kumahq/kuma-universal:$TAG test-server echo
+  fi
+  
+  echo
+  echo "echo server available at:"
+  echo "http://host.docker.internal:16600"
+  echo "http://localhost:16600"
+}
+
+function kong_dev(){
+  set -e
+  VERSION=$1
+  if [[ -z "$VERSION" ]]; then
+    VERSION=3.12
+  fi
+
+  COLOR_GREEN='\033[1;32m'
+  COLOR_NONE='\033[0m' # no color
+  NL="${COLOR_NONE}\n" # line breaks
+
+  MINOR=$(echo "$VERSION" | awk -F  '.' '{print $1"."$2}')
+  VERSION_XX="${MINOR}.x.x"
+  VERSION_NODOT=$(echo "$VERSION_XX" | sed 's/\.//g')
+
+  cd /Users/$USER/go/src/github.com/Kong/
+
+  if [[ ! -d "./kong-ee-${VERSION_NODOT}" ]]; then
+    cp -R kong-ee kong-ee-${VERSION_NODOT}
+  fi
+  cd kong-ee-${VERSION_NODOT}
+
+  git reset .
+  git checkout .
+  git clean -fd
+
+  git checkout master || git checkout main
+  git --no-pager branch | grep -v "master" | grep -v "main" | xargs git branch -D
+
+  git fetch
+  git checkout --track origin/next/${VERSION_XX}
+
+  printf "${COLOR_GREEN}Will run make build-venv${NL}"
+  sleep .5
+
+  ls
+  make clean
+  make build-venv
+
+
+  echo 
+  printf "${COLOR_GREEN}Build complete.${NL}"
+  echo 
+  printf "${COLOR_GREEN}Run the following commands and start working:${NL}"
+
+  echo "  source bazel-bin/build/kong-dev-venv.sh"
+  echo "  start_services"
+  echo "  kong migrations bootstrap"
+  echo "  kong start"
+  echo "  export DECK_KONG_ADDR=http://localhost:8001"
+  echo "  deck gateway ping"
+}
+
+function kong_license(){
+  source ~/.local/bin/license --no-update
+}
+
 alias klogs=klog
 alias day='cd ~/go/src/github.com/jijiechen/kong-workspace/day'
 alias kuma='cd ~/go/src/github.com/jijiechen/kuma'
 alias km='cd ~/go/src/github.com/Kong/kong-mesh'
+alias kee='cd ~/go/src/github.com/Kong/kong-ee'
 
 alias kuma0='export KUBECONFIG=~/.kube/kind-kuma-config'
 alias kuma1='export KUBECONFIG=~/.kube/kind-kuma-1-config'
@@ -276,7 +353,7 @@ alias preview-release="$HOME/go/src/github.com/jijiechen/kong-workspace/kong-mes
 alias clera='clear'
 alias pdos='pods'
 
-export PATH=$HOME/go/bin:$HOME/Library/Python/3.9/bin:$HOME/.cargo/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
+export PATH=$HOME/go/bin:$HOME/Library/Python/3.13/bin:$HOME/.cargo/bin:$HOME/.kuma-dev/kuma-master/bin:$HOME/.local/bin:$PATH
 use_kuma
 if type crcd >/dev/null 2>&1 ; then
   eval $(crc oc-env)
@@ -290,3 +367,5 @@ export GIT_PERSONAL_ORG=jijiechen
 if [[ -z "$ZSH" ]]; then
 export PS1='\[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\]\$ '
 fi
+
+source <(fzf --zsh)
