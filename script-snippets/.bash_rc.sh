@@ -46,7 +46,7 @@ function git_init_repo(){
 
 # add auto sign off commit template
 cat <<EOF > .git/hooks/prepare-commit-msg
-#!/bin/sh
+#!/bin/bash
 
 NAME=$(git config user.name)
 EMAIL=$(git config user.email)
@@ -281,7 +281,31 @@ function echo_server(){
 }
 
 function kong_dev(){
-  set -e
+  printf "${COLOR_GREEN}Will run make build-venv${NL}"
+  echo 
+  sleep .5
+
+  ls
+  make clean
+  make build-venv
+
+
+  echo 
+  printf "${COLOR_GREEN}Build complete.${NL}"
+  echo 
+  printf "${COLOR_GREEN}Run the following commands and start working:${NL}"
+
+  echo "  source bazel-bin/build/kong-dev-venv.sh"
+  echo "  start_services"
+  echo "  kong migrations bootstrap"
+  echo "  kong start"
+  echo "  export DECK_KONG_ADDR=http://localhost:8001"
+  echo "  deck gateway ping"
+}
+
+
+function kong_dev_ver(){
+  # set -e
   VERSION=$1
   if [[ -z "$VERSION" ]]; then
     VERSION=3.12
@@ -312,25 +336,7 @@ function kong_dev(){
   git fetch
   git checkout --track origin/next/${VERSION_XX}
 
-  printf "${COLOR_GREEN}Will run make build-venv${NL}"
-  sleep .5
-
-  ls
-  make clean
-  make build-venv
-
-
-  echo 
-  printf "${COLOR_GREEN}Build complete.${NL}"
-  echo 
-  printf "${COLOR_GREEN}Run the following commands and start working:${NL}"
-
-  echo "  source bazel-bin/build/kong-dev-venv.sh"
-  echo "  start_services"
-  echo "  kong migrations bootstrap"
-  echo "  kong start"
-  echo "  export DECK_KONG_ADDR=http://localhost:8001"
-  echo "  deck gateway ping"
+  kong_dev
 }
 
 function kong_license(){
