@@ -1,0 +1,622 @@
+{
+    "kds-version": "v2",
+    "response": {
+        "ControlPlaneId": "global",
+        "Type": "ServiceInsight",
+        "AddedResources": {
+            "Items": [
+                {
+                    "Meta": {},
+                    "Spec": {
+                        "services": {
+                            "apiplatformruntime-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappapiruntimeliveqa.asbbank.co.nz:443"
+                            },
+                            "apiplatformsynapsegateway-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappapiplatformsynapsegatewayliveqa.asbbank.co.nz:443"
+                            },
+                            "appinsights-external-svc-80": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "newzealandnorth-0.in.applicationinsights.azure.com:443"
+                            },
+                            "azuremonitor-ingestion_mesh-observability_svc_80": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 2
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 2
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "baas-kong-gateway-kong-admin_baas-kong_svc_8001": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "serviceType": 2,
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "fluent-bit_mesh-observability_svc_2020": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 2
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 2
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "fluent-bit_mesh-observability_svc_8888": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 2
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 2
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "internetproxy.external.svc.8080": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "internetsvcproxyqa.asbbank.co.nz:8080"
+                            },
+                            "kdc-external-svc-80": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "_kerberos._tcp.dc._msdcs.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca7858-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca7858.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca7859-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca7859.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca8251-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca8251.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9511-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9511.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9595-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9595.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9674-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9674.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9675-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9675.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9676-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9676.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9677-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9677.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9679-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9679.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9682-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9682.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9693-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9693.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-winatca9700-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "winatca9700.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp7858-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp7858.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp7859-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp7859.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp8251-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp8251.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9511-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9511.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9595-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9595.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9674-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9674.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9675-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9675.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9676-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9676.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9677-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9677.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9679-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9679.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9682-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9682.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9693-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9693.prod.asbgroup.co.nz:88"
+                            },
+                            "kdc-wincomp9700-external-svc-88": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "wincomp9700.prod.asbgroup.co.nz:88"
+                            },
+                            "kek-kv-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-trn-dev-01.vault.azure.net:443"
+                            },
+                            "keyvault-synapse-testgroup1-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-0208528trn-01.vault.azure.net:443"
+                            },
+                            "keyvault-synapse-testgroup2-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-0206987trn-01.vault.azure.net:443"
+                            },
+                            "keyvault-training-group-2-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-0219390trn-01.vault.azure.net:443"
+                            },
+                            "keyvault-training-group1-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-0217891trn-01.vault.azure.net:443"
+                            },
+                            "opentelemetry-collector-external-svc-4317": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "opentelemetry-collector.mesh-observability.svc.cluster.local:4317"
+                            },
+                            "opentelemetry-collector-external-svc-4318": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "opentelemetry-collector.mesh-observability.svc.cluster.local:4318"
+                            },
+                            "opentelemetry-collector_mesh-observability_svc_4317": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "opentelemetry-collector_mesh-observability_svc_4318": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "opentelemetry-collector_mesh-observability_svc_8888": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "opentelemetry-collector_mesh-observability_svc_8889": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "pubkm-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-trn-pubkm-01.vault.azure.net:443"
+                            },
+                            "redis-synapi-external-svc-6380": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-redis-d01-wrkld-trn-01.redis.cache.windows.net:6380"
+                            },
+                            "staffidentityprovider-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappstaffidentityproviderdev.asbbank.co.nz:443"
+                            },
+                            "synapse-privatekeymanagement-v1_synapse_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-publickeymanagement-v1_synapse_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi1-v1-tests-m-cont_synapse-testgroup1_svc": {
+                                "status": 2,
+                                "dataplanes": {
+                                    "online": 1,
+                                    "offline": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi1-v1_synapse-testgroup1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi2-v1-tests-m-cont_synapse-testgroup2_svc": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi2-v1_synapse-testgroup2_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi3-v1_synapse-testgroup1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testapi4-v1_synapse-testgroup1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testidentityprovider-v1_synapse_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testpip1-v1-tests-m-cont_synapse-testgroup1_svc": {
+                                "status": 2,
+                                "dataplanes": {
+                                    "online": 1,
+                                    "offline": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testpip1-v1_synapse-testgroup1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testpip2-v1-tests-m-cont_synapse-testgroup2_svc": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testpip2-v1_synapse-testgroup2_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-testprivatekeymanagement-v1_synapse_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-tg2api1-v1_training-group-2_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-trainingapi1-v1_training-group1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-trainingapi2-v1_training-group1_svc_8080": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synapse-trainingapp4-v1_training-group1_svc": {
+                                "status": 3,
+                                "dataplanes": {
+                                    "online": 1
+                                },
+                                "issuedBackends": {
+                                    "baas-ca": 1
+                                },
+                                "zones": [
+                                    "trn-dev"
+                                ]
+                            },
+                            "synkek-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "asb-kv-d01-trn-synkek-01.vault.azure.net:443"
+                            },
+                            "trnext-schema-registry-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "psrc-mp377.australiaeast.azure.confluent.cloud:443"
+                            },
+                            "webappapitest-entra-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappapitest.entradev.asbbank.co.nz:443"
+                            },
+                            "webappapitest-kerberos-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappapitest.kerberosdev.asbbank.co.nz:443"
+                            },
+                            "webappapitest-mtls-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webappapitest.mtlsdev.asbbank.co.nz:443"
+                            },
+                            "webapponyxpocdev-external-svc-443": {
+                                "status": 4,
+                                "dataplanes": {},
+                                "serviceType": 1,
+                                "addressPort": "webapponyxpocdev.asbbank.co.nz:443"
+                            }
+                        }
+                    }
+                }
+            ],
+            "Pagination": {
+                "Total": 0,
+                "NextOffset": ""
+            }
+        },
+        "InvalidResourcesKey": [],
+        "RemovedResourcesKey": [],
+        "IsInitialRequest": false
+    }
+}

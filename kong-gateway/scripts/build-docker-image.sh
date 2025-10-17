@@ -1,0 +1,2 @@
+bazel build --config release //build:kong --verbose_failures
+docker build -f ./build/dockerfiles/deb.Dockerfile --build-arg 'KONG_ARTIFACT_PATH=bazel-bin/pkg' --build-arg 'EE_PORTS=8002 8445 8003 8446 8004 8447' --build-arg 'KONG_BASE_IMAGE=debian:12-slim' --build-arg 'KONG_VERSION=3.13.20' --build-arg 'PACKAGE_DISTRO=' .
