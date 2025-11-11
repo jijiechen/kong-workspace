@@ -1,3 +1,5 @@
+export USER=$(whoami)
+
 alias gs='git status'
 alias k='kubectl'
 alias pods='kubectl get pods -w'
@@ -340,7 +342,94 @@ function kong_dev_ver(){
 }
 
 function kong_license(){
+  # instructions: https://github.com/kong/kong-license
   source ~/.local/bin/license --no-update
+}
+
+function deck_it(){
+  COLOR_RED='\033[1;31m'
+  COLOR_GREEN='\033[1;32m'
+  COLOR_NONE='\033[0m' # no color
+  NL="${COLOR_NONE}\n" # line breaks
+
+ KONNECT_TOKEN=$(cat /Users/$USER/.ssh/konnect-pat-token || true)
+ if [[ "$KONNECT_TOKEN" == "" ]]; then
+  return
+ fi
+
+ if [[ "$1" == "" ]]; then
+  printf "${COLOR_RED}Put control plane name as parameter 1${NL}"
+  return
+ fi
+ if [[ "$2" == "" ]]; then
+  printf "${COLOR_RED}Please control plane admin URL as parameter 2${NL}"
+  return
+ fi
+
+
+ eval "$(cat <<EOF
+export DECK_KONNECT_TOKEN=$KONNECT_TOKEN
+export DECK_KONNECT_CONTROL_PLANE_NAME=$1
+export KONNECT_CONTROL_PLANE_URL=$2
+EOF
+)"
+
+ deck gateway ping
+}
+
+function host_ip(){
+  ifconfig | grep -C 5 en0 | grep inet | grep -v inet6 | awk '{print $2}'
+}
+
+function host_ipv6(){
+  ifconfig | grep -C 5 en0 | grep inet6 | tr '%' ' ' | awk '{print $2}'
+}
+
+function container_name(){
+  CONTAINER_NAME_PATTERN=$1
+  docker ps | grep "$CONTAINER_NAME_PATTERN"  | head -n 1 | rev | awk '{print $1}' | rev
+}
+
+function container_ip(){
+  CONTAINER_NAME=$(container_name "$1")
+  if [[ ! -z "$CONTAINER_NAME" ]]; then
+    docker inspect "$CONTAINER_NAME" --format='{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}' | awk '{print $1}'
+  else
+    echo "No such container pattern: $CONTAINER_NAME_PATTERN"
+  fi
+}
+
+function container_port(){
+  CONTAINER_NAME=$(container_name "$1")
+  if [[ ! -z "$CONTAINER_NAME" ]]; then
+    docker inspect "$CONTAINER_NAME" --format='{{ .NetworkSettings.Ports }}' | awk '{print $2}' | tr  '}' ' ' | awk '{print $1}'
+  else
+    echo "No such container pattern: $CONTAINER_NAME_PATTERN"
+  fi
+}
+
+function decrypt(){
+  if [[ -z "${ENC_PWD}" ]]; then
+    echo "No password defined using environment variable 'ENC_PWD'"
+    return
+  fi
+  FILE=$1
+
+  if [[ ! -z "$FILE" ]]; then
+    FILE_OUT=${FILE%.enc}
+    if [[ "$FILE_OUT" == "$FILE" ]]; then
+      FILE_OUT=${FILE}.txt
+    fi
+    openssl enc -d -aes-256-cbc -pbkdf2 -in "$FILE" -out "$FILE_OUT" -pass pass:"$ENC_PWD"
+  else
+    for F in $(ls -1 *.enc); do
+      F_OUT=${F%.enc}
+      if [[ "$F_OUT" == "$F" ]]; then
+        F_OUT=${F}.txt
+      fi
+      openssl enc -d -aes-256-cbc -pbkdf2 -in "$F" -out "$F_OUT" -pass pass:"$ENC_PWD"
+    done
+  fi  
 }
 
 alias klogs=klog
