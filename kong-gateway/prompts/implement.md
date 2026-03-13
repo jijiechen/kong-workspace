@@ -39,7 +39,9 @@ To prevent incomplete builds, when a `make dev` run fails, make sure run `make c
 
 ### 3. Learn existing design and make a plan
 
-We learn the existing design of involved plugin or compoent to make a good plan for the implemention, make a list of the implementation to make sure we are always on the write direction. Share your implementation to me before you make code changes. Don't need to wait for my agreement to proceed.
+If we are making changes to an existing Kong Gateway plugin, you MUST learn the feature of the existing plugin by fetching the document at https://developer.konghq.com/plugins/(plugin_name)/ (for example https://developer.konghq.com/plugins/openid-connect/).  You MUST learn the design of involved plugin or compoent to make a good plan for the implemention, make a todo-list of the implementation to make sure you are always on the write direction. 
+
+Share your implementation to me before you make code changes. Don't need to wait for my agreement to proceed.
 
 ### 4. Write failing test cases
 
