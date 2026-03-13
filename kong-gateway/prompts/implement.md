@@ -11,6 +11,8 @@ Please make changes in the codebase directly and implement the feature or fix:
 
 ## Engineering practices
 
+IMPORTANT: Your implementation should not breaking existing users of Kong Gateway except explicitly allowed by me.
+
 You should follow this order to implement the features:
 
 1. Make sure you are at the correct place: we fix issues on master first and then backport to old branches. So we should be either on a branch that is created from master or we should create a new branch from master. When a new branch needs to be created, we pull the latest.
@@ -83,3 +85,19 @@ Try to run this lua lint after your code changes:
 ```sh
 luacheck **/*.lua --no-default-config --config .luacheckrc --exclude-files ./distribution/
 ```
+
+9. Schema changes
+
+If the new feature you are working needs to add/remove or change fields in configuration schemas it may cause compatibility issues since Kong Gateway is a DP-CP architecture software. Interestingly, the DP and CP load the same set of schema. Now, here is the problem: when a 3.14 or an older DP is connecting to a CP that is running 3.15 which is newer, the CP can push a config to the DP with the newly added field to the older DP:  this will cause a configuration failure on the DP, because it does not recognize that field. 
+
+To fix this compatibility issue, we need to mark the newly added fields as removed when an older DP is connecting to this new version CP, so that the CP will remove this field when sending to this DP. To do that, newly added fields need to be marked as removed in the file kong/clustering/compat/removed_fields.lua. Changed fields need to be marked in kong/clustering/compat/checkers.lua 
+
+We also need to add some unit tests to test this scenario, tests are in spec-ee/02-integration/14-hybrid_mode/04-config-compat_spec.lua
+
+Learn the pattern from the the mentioned files above to know how to declare these removals and changes. As an example removal is: `module.3014000000.openid_connect` has an element "token_exchange", meaning the field "token_exchange" should be removed from configs of the openid_connect plugin for DPs older than 3.14. 
+
+run `ls -1 | grep rockspec` on the project root dir to know the next release version number.
+
+10. Change log
+
+A changelog file needs to be created under `changelog/unreleased/kong-ee`. More on how to write this file please refer to existing change log files of exsiting versions at changelog/<version>/kong-ee/*.yml.
