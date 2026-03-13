@@ -1,8 +1,13 @@
 
+# Implement features for Kong Gateway
 
 Kong Gateway is the world's leading API gateway based on NGINX and OpenResty. This code base is the enterprise version of Kong Gateway.
 
 Please make changes in the codebase directly and implement the feature or fix:
+
+## Goal definition
+
+(todo: replace this part your goal)
 
 > <problem statement>
 
@@ -15,9 +20,11 @@ IMPORTANT: Your implementation should not breaking existing users of Kong Gatewa
 
 You should follow this order to implement the features:
 
-1. Make sure you are at the correct place: we fix issues on master first and then backport to old branches. So we should be either on a branch that is created from master or we should create a new branch from master. When a new branch needs to be created, we pull the latest.
+### 1. Switch to a branch or create a branch
 
-2. Create clean binaries of Kong before doing local development (this can take about 10 mins)
+Make sure you are at the correct place: we implement features and fixes on a feature branch first and they will be backported to old branches after the PR is merged on GitHub. So on the local development env, we should be either on a branch that is created from `master` or we should create a new branch from `master`. When a new branch needs to be created, please pull the latest code from remote `master`.
+
+### 2. Prepare Kong/Nginx/OpenResty binaries
 
 Usually this is not done by you the assistant (but by me, the user of you), but if you encounter any critical/weird issues (like Kong fails to run because of a C stack trace), you can try it:
 
@@ -26,15 +33,20 @@ make clean
 make dev
 ```
 
+By running these commands, you can create clean binaries required by Kong before doing local development (this can take about 10 mins).
+
 To prevent incomplete builds, when a `make dev` run fails, make sure run `make clean` before next trial.
 
-3. Learn existing design and make a plan
+### 3. Learn existing design and make a plan
 
 We learn the existing design of involved plugin or compoent to make a good plan for the implemention, make a list of the implementation to make sure we are always on the write direction. Share your implementation to me before you make code changes. Don't need to wait for my agreement to proceed.
 
-4. Based on the implementation plan, write failing test cases (so, it's TDD way).
+### 4. Write failing test cases
 
-Unit tests for plguins can locate in one of these positions:
+Based on the implementation plan, write failing test cases (so, it's TDD way).
+
+Unit tests for plugins can locate in one of these positions:
+
 * spec/03-plugins/<plugin_name>
 * spec-ee/03-plugins/<plugin_name>
 
@@ -42,7 +54,7 @@ How to decide which place we should place a new test case? We find where are the
 
 If it's not a plugin, find the existing test cases under `spec` or `spec-ee` using the same methodology.
 
-5. Run the test cases:
+### 5. Run the test cases
 
 Some tests does not have component dependencies, and most test cases rely on the postgre database. 
 
@@ -65,20 +77,20 @@ To test config schema changes and plugin logic, a real Kong instance is usually 
 
 To speed up running, you can add "#tag_name" to name of cases and then add `-t tag_name` into the busted command to focus on that particular test case. Remember to remove unnecessary tags from test cases after the feature implementation is finished.
 
-6. Implement the feature using Lua:
+### 6. Implement the feature using Lua
 
 Try pure lua solutions first without importing new external modules. If an external module is not avoidable, please stop immediately and output the reasons. Let me make the decision on how to move on.
 
 Pass the test cases using the Lua implementation.
 
-7. Debugging
+### 7. Debugging
 
 Use these ways:
   1. Check busted outputs
   1. add `print()` directives into test code: for example `print("my-debug-label", my_var)`, and `print("my-debug-label", require("pl.pretty").write(my_var))` if more structurale output needed. These outputs can be read directly from the test runner output
   1. add `print()` directives into production code. These outputs can be read from Kong/nginx output. Usually it's under `servroot/logs/error.log` or `servroot2/logs/error.log` or `servroot_dp/logs/error.log` or `servroot_cp/logs/error.log` depending on the prefix parameter used to `start_kong`.
 
-8. Linting
+### 8. Linting
 
 Try to run this lua lint after your code changes:
 
@@ -86,7 +98,7 @@ Try to run this lua lint after your code changes:
 luacheck **/*.lua --no-default-config --config .luacheckrc --exclude-files ./distribution/
 ```
 
-9. Schema changes
+### 9. Schema changes
 
 If the new feature you are working needs to add/remove or change fields in configuration schemas it may cause compatibility issues since Kong Gateway is a DP-CP architecture software. Interestingly, the DP and CP load the same set of schema. Now, here is the problem: when a 3.14 or an older DP is connecting to a CP that is running 3.15 which is newer, the CP can push a config to the DP with the newly added field to the older DP:  this will cause a configuration failure on the DP, because it does not recognize that field. 
 
@@ -98,6 +110,6 @@ Learn the pattern from the the mentioned files above to know how to declare thes
 
 run `ls -1 | grep rockspec` on the project root dir to know the next release version number.
 
-10. Change log
+### 10. Change log
 
 A changelog file needs to be created under `changelog/unreleased/kong-ee`. More on how to write this file please refer to existing change log files of exsiting versions at changelog/<version>/kong-ee/*.yml.
