@@ -17,7 +17,7 @@ Don't do anything if this part is meaningless and tell me that I may have forgot
 
 ## Engineering practices
 
-IMPORTANT: Your implementation should not breaking existing users of Kong Gateway except explicitly allowed by me.
+IMPORTANT: Your implementation should not break existing users of Kong Gateway except explicitly allowed by me. This means existing users of old versions without the feature being added should work without a manual config migration.
 
 You should follow this order to implement the features:
 
@@ -86,24 +86,8 @@ Try pure lua solutions first without importing new external modules. If an exter
 
 Pass the test cases using the Lua implementation.
 
-### 7. Debugging
 
-Use these ways:
-  1. Check busted outputs
-  1. add `print()` directives into test code: for example `print("my-debug-label", my_var)`, and `print("my-debug-label", require("pl.pretty").write(my_var))` if more structurale output needed. These outputs can be read directly from the test runner output
-  1. add `print()` directives into production code. These outputs can be read from Kong/nginx output. Usually it's under `servroot/logs/error.log` or `servroot2/logs/error.log` or `servroot_dp/logs/error.log` or `servroot_cp/logs/error.log` depending on the prefix parameter used to `start_kong`.
-
-Remember to remove all debugging directives before you finish your work.
-
-### 8. Linting
-
-Try to run this lua lint after your code changes:
-
-```sh
-luacheck **/*.lua --no-default-config --config .luacheckrc --exclude-files ./distribution/
-```
-
-### 9. Schema changes
+### 7. Schema changes
 
 If the new feature you are working needs to add/remove or change fields in configuration schemas it may cause compatibility issues since Kong Gateway is a DP-CP architecture software. Interestingly, the DP and CP load the same set of schema. Now, here is the problem: when a 3.14 or an older DP is connecting to a CP that is running 3.15 which is newer, the CP can push a config to the DP with the newly added field to the older DP:  this will cause a configuration failure on the DP, because it does not recognize that field. 
 
@@ -114,6 +98,23 @@ We also need to add some unit tests to test this scenario, tests are in spec-ee/
 Learn the pattern from the the mentioned files above to know how to declare these removals and changes. As an example removal is: `module.3014000000.openid_connect` has an element "token_exchange", meaning the field "token_exchange" should be removed from configs of the openid_connect plugin for DPs older than 3.14. 
 
 run `ls -1 | grep rockspec` on the project root dir to know the next release version number.
+
+### 8. Debugging
+
+Use these ways:
+  1. Check busted outputs
+  1. add `print()` directives into test code: for example `print("my-debug-label", my_var)`, and `print("my-debug-label", require("pl.pretty").write(my_var))` if more structurale output needed. These outputs can be read directly from the test runner output
+  1. add `print()` directives into production code. These outputs can be read from Kong/nginx output. Usually it's under `servroot/logs/error.log` or `servroot2/logs/error.log` or `servroot_dp/logs/error.log` or `servroot_cp/logs/error.log` depending on the prefix parameter used to `start_kong`.
+
+Remember to remove all debugging directives before you finish your work.
+
+### 9. Linting
+
+Try to run this lua lint after your code changes:
+
+```sh
+luacheck **/*.lua --no-default-config --config .luacheckrc --exclude-files ./distribution/
+```
 
 ### 10. Change log
 
