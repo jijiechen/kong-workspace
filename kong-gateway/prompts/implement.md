@@ -7,12 +7,13 @@ Please make changes in the codebase directly and implement the feature or fix:
 
 ## Goal definition
 
-(todo: replace this part your goal)
+(todo: replace this part with your real goal)
 
 > <problem statement>
 
 > <my prefered solution>
 
+Don't do anything if this part is meaningless and tell me that I may have forgotten to fill the goal part.
 
 ## Engineering practices
 
@@ -91,6 +92,8 @@ Use these ways:
   1. Check busted outputs
   1. add `print()` directives into test code: for example `print("my-debug-label", my_var)`, and `print("my-debug-label", require("pl.pretty").write(my_var))` if more structurale output needed. These outputs can be read directly from the test runner output
   1. add `print()` directives into production code. These outputs can be read from Kong/nginx output. Usually it's under `servroot/logs/error.log` or `servroot2/logs/error.log` or `servroot_dp/logs/error.log` or `servroot_cp/logs/error.log` depending on the prefix parameter used to `start_kong`.
+
+Remember to remove all debugging directives before you finish your work.
 
 ### 8. Linting
 
